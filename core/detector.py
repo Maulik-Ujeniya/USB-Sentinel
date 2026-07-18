@@ -1,12 +1,12 @@
 import psutil
 import time
-from identifier import get_drive_serial,eject_drive
-
-from db import init_db, record_drive_connection, is_trusted, set_trusted
-
 import sys
 import os
+
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "gui"))
+
+from identifier import get_drive_serial, eject_drive
+from db import init_db, record_drive_connection, is_trusted, set_trusted
 from popup import ask_allow_or_block
 
 def get_connected_drives():
