@@ -1,6 +1,7 @@
 import psutil
 import time
-from identifier import get_drive_serial
+from identifier import get_drive_serial,eject_drive
+
 from db import init_db, record_drive_connection, is_trusted, set_trusted
 
 import sys
@@ -32,7 +33,9 @@ def handle_new_drive(drive_letter, serial):
         print(f"    User ALLOWED this drive. Marked as trusted.")
     else:
         set_trusted(serial, 0)
-        print(f"    User BLOCKED this drive.")
+        print(f"    User BLOCKED this drive. Ejecting...")
+        eject_drive(drive_letter)
+        print(f"    Drive ejected.")
 
 def start_watching():
     init_db()

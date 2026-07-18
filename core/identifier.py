@@ -54,3 +54,19 @@ if __name__ == "__main__":
 
     serial = get_drive_serial(device_input)
     print(f"Serial Number: {serial}")
+
+def eject_drive(drive_letter):
+    os_name = platform.system()
+    drive_letter = drive_letter.replace("\\", "").replace(":", "").strip().upper()
+
+    if os_name == "Windows":
+        cmd = [
+            "powershell",
+            "-Command",
+            f"(New-Object -comObject Shell.Application).Namespace(17).ParseName('{drive_letter}:').InvokeVerb('Eject')"
+        ]
+        subprocess.run(cmd, capture_output=True, text=True)
+        return True
+    else:
+        # Mac and Linux eject commands come later once we can test on those OS
+        return False

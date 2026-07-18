@@ -67,3 +67,18 @@ def set_trusted(serial_number, trusted_value):
     """, (trusted_value, serial_number))
     conn.commit()
     conn.close()
+
+def list_all_drives():
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT serial_number, drive_letter, connection_count, trusted FROM drives")
+    rows = cursor.fetchall()
+    conn.close()
+    return rows
+
+def forget_drive(serial_number):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM drives WHERE serial_number = ?", (serial_number,))
+    conn.commit()
+    conn.close()
