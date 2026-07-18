@@ -58,3 +58,12 @@ def is_trusted(serial_number):
 if __name__ == "__main__":
     init_db()
     print("Database created at:", DB_PATH)
+
+def set_trusted(serial_number, trusted_value):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        UPDATE drives SET trusted = ? WHERE serial_number = ?
+    """, (trusted_value, serial_number))
+    conn.commit()
+    conn.close()

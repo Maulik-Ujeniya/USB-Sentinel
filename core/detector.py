@@ -1,7 +1,12 @@
 import psutil
 import time
 from identifier import get_drive_serial
-from db import init_db, record_drive_connection
+from db import init_db, record_drive_connection, is_trusted, set_trusted
+
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), "..", "gui"))
+from popup import ask_allow_or_block
 
 def get_connected_drives():
     drives = []
@@ -9,6 +14,25 @@ def get_connected_drives():
         if 'removable' in d.opts or d.fstype != '':
             drives.append(d.device)
     return set(drives)
+
+def handle_new_drive(drive_letter, serial):
+    already_known = is_trusted(serial)
+
+    record_drive_connection(serial, drive_letter)
+
+    if already_known:
+        print(f"    Trusted drive — allowed silently.")
+        return
+
+    print(f"    Unknown drive — asking user...")
+    allowed = ask_allow_or_block(drive_letter, serial)
+
+    if allowed:
+        set_trusted(serial, 1)
+        print(f"    User ALLOWED this drive. Marked as trusted.")
+    else:
+        set_trusted(serial, 0)
+        print(f"    User BLOCKED this drive.")
 
 def start_watching():
     init_db()
@@ -26,8 +50,7 @@ def start_watching():
             print(f"[+] Drive inserted: {drive}")
             serial = get_drive_serial(drive)
             if serial:
-                record_drive_connection(serial, drive)
-                print(f"    Serial: {serial} -> saved to database")
+                handle_new_drive(drive, serial)
             else:
                 print("    Could not read serial number")
 
