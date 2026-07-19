@@ -3,6 +3,12 @@ import json
 import hashlib
 from datetime import datetime
 from identifier import get_drive_serial
+import zipfile
+try:
+    import pefile
+    PEFILE_AVAILABLE = True
+except ImportError:
+    PEFILE_AVAILABLE = False
 
 FILE_CATEGORIES = {
     "Image": [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".svg", ".webp", ".heic"],
@@ -24,12 +30,14 @@ CATEGORY_ICONS = {
 }
 FOLDER_ICON = "📁"
 
+
 def get_category(extension):
     extension = extension.lower()
     for category, extensions in FILE_CATEGORIES.items():
         if extension in extensions:
             return category
     return "Other"
+
 
 def format_size(size_bytes):
     if size_bytes >= 1024 ** 3:
@@ -40,6 +48,61 @@ def format_size(size_bytes):
         return f"{size_bytes / 1024:.2f} KB"
     else:
         return f"{size_bytes} B"
+
+
+def preview_zip_contents(zip_path, max_entries=50):
+    try:
+        with zipfile.ZipFile(zip_path, 'r') as z:
+            entries = z.namelist()
+            info_list = []
+            for name in entries[:max_entries]:
+                info = z.getinfo(name)
+                info_list.append({
+                    "name": name,
+                    "size_readable": format_size(info.file_size),
+                    "is_folder": name.endswith("/")
+                })
+            return {
+                "total_entries": len(entries),
+                "shown_entries": len(info_list),
+                "entries": info_list
+            }
+    except (zipfile.BadZipFile, OSError, FileNotFoundError):
+        return {"error": "Could not read this archive (corrupted or unsupported format)."}
+
+
+def read_exe_metadata(exe_path):
+    if not PEFILE_AVAILABLE:
+        return {"error": "exe reading not available on this system"}
+
+    try:
+        pe = pefile.PE(exe_path, fast_load=True)
+        pe.parse_data_directories(directories=[pefile.DIRECTORY_ENTRY['IMAGE_DIRECTORY_ENTRY_RESOURCE']])
+
+        info = {"publisher": "Unknown", "product_name": "Unknown", "version": "Unknown", "digitally_signed": False}
+
+        if hasattr(pe, "FileInfo"):
+            for file_info in pe.FileInfo:
+                for entry in file_info:
+                    if hasattr(entry, "StringTable"):
+                        for st in entry.StringTable:
+                            for key, value in st.entries.items():
+                                key_str = key.decode(errors="ignore")
+                                value_str = value.decode(errors="ignore")
+                                if key_str == "CompanyName":
+                                    info["publisher"] = value_str
+                                elif key_str == "ProductName":
+                                    info["product_name"] = value_str
+                                elif key_str == "ProductVersion":
+                                    info["version"] = value_str
+
+        info["digitally_signed"] = hasattr(pe, "DIRECTORY_ENTRY_SECURITY")
+
+        pe.close()
+        return info
+    except Exception:
+        return {"error": "Could not read exe metadata (file may be corrupted or unusual format)."}
+
 
 def scan_drive_full(drive_path):
     folders = []
@@ -66,14 +129,22 @@ def scan_drive_full(drive_path):
             category = get_category(extension)
             icon = CATEGORY_ICONS.get(category, "❓")
 
-            folder_entry["files"].append({
+            file_entry = {
                 "name": file,
                 "extension": extension if extension else "(no extension)",
                 "category": category,
                 "icon": icon,
                 "size_bytes": size,
                 "size_readable": format_size(size)
-            })
+            }
+
+            if extension == ".zip":
+                file_entry["zip_preview"] = preview_zip_contents(file_path)
+
+            if extension == ".exe" and PEFILE_AVAILABLE:
+                file_entry["exe_metadata"] = read_exe_metadata(file_path)
+
+            folder_entry["files"].append(file_entry)
 
             total_files += 1
             total_size += size
@@ -96,6 +167,7 @@ def scan_drive_full(drive_path):
         "folders": folders
     }
 
+
 def get_file_hash(file_path, block_size=65536):
     hasher = hashlib.sha256()
     try:
@@ -108,6 +180,7 @@ def get_file_hash(file_path, block_size=65536):
         return hasher.hexdigest()
     except (OSError, FileNotFoundError, PermissionError):
         return None
+
 
 def find_duplicates(data):
     hash_map = {}
@@ -143,6 +216,7 @@ def find_duplicates(data):
 
     return duplicates
 
+
 def find_largest_files(data, top_n=10):
     all_files = []
     for folder in data["folders"]:
@@ -155,12 +229,8 @@ def find_largest_files(data, top_n=10):
     all_files.sort(key=lambda x: x["size_bytes"], reverse=True)
     return all_files[:top_n]
 
+
 def get_snapshot_id(scanned_path, serial):
-    """
-    Builds a unique ID per (physical drive + exact folder scanned),
-    so different folders on the same drive never share a snapshot,
-    and different physical drives never collide either.
-    """
     drive_root, tail = os.path.splitdrive(os.path.abspath(scanned_path))
     normalized_tail = tail.replace("\\", "/").strip("/").lower()
     base_id = serial if serial else "unknownserial"
@@ -170,8 +240,10 @@ def get_snapshot_id(scanned_path, serial):
         return f"{base_id}_{tail_hash}"
     return base_id
 
+
 def get_snapshot_path(reports_dir, snapshot_id):
     return os.path.join(reports_dir, f"{snapshot_id}_snapshot.json")
+
 
 def compare_to_previous_scan(current_data, snapshot_path):
     if not os.path.exists(snapshot_path):
@@ -202,9 +274,11 @@ def compare_to_previous_scan(current_data, snapshot_path):
         "modified": modified
     }
 
+
 def save_json_report(data, output_path):
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2)
+
 
 def save_text_report(data, duplicates, largest_files, changes, output_path):
     total_duplicate_copies = sum(d["count"] - 1 for d in duplicates)
@@ -268,7 +342,15 @@ def save_text_report(data, duplicates, largest_files, changes, output_path):
             f.write(f"{FOLDER_ICON} {folder['path']}\n")
             for file in folder["files"]:
                 f.write(f"    {file['icon']} {file['name']:40} | {file['category']} ({file['extension']}) | {file['size_readable']}\n")
+                if "zip_preview" in file and "entries" in file["zip_preview"]:
+                    f.write(f"        📦 Contains {file['zip_preview']['total_entries']} item(s):\n")
+                    for entry in file["zip_preview"]["entries"]:
+                        f.write(f"           - {entry['name']} ({entry['size_readable']})\n")
+                if "exe_metadata" in file and "publisher" in file["exe_metadata"]:
+                    meta = file["exe_metadata"]
+                    f.write(f"        ⚙️  Publisher: {meta['publisher']} | Product: {meta['product_name']} | Version: {meta['version']} | Signed: {meta['digitally_signed']}\n")
             f.write("\n")
+
 
 def print_duplicate_details(duplicates):
     if not duplicates:
