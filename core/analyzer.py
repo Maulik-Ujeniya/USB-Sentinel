@@ -1,8 +1,13 @@
 import os
+import sys
 import json
 import hashlib
 import shutil
 from datetime import datetime
+
+# Ensure core/ is on the import path regardless of where the script is launched from
+sys.path.insert(0, os.path.dirname(__file__))
+
 from identifier import get_drive_serial
 import zipfile
 try:
@@ -122,7 +127,17 @@ def get_disk_usage(path):
         return None
 
 
+# ---- Live scan status callback support ----
+_scan_progress_callback = None
+
+def set_scan_progress_callback(callback):
+    """Set a callback function(files_scanned, total_folders, current_folder) for live progress."""
+    global _scan_progress_callback
+    _scan_progress_callback = callback
+
+
 def scan_drive_full(drive_path):
+    global _scan_progress_callback
     folders = []
     total_files = 0
     total_folders_scanned = 0
@@ -131,6 +146,14 @@ def scan_drive_full(drive_path):
 
     for root, dirs, files in os.walk(drive_path):
         total_folders_scanned += 1
+
+        # Report progress via callback
+        if _scan_progress_callback:
+            try:
+                _scan_progress_callback(total_files, total_folders_scanned, root)
+            except Exception:
+                pass
+
         if not files:
             continue
 
@@ -204,12 +227,31 @@ def get_file_hash(file_path, block_size=65536):
 
 
 def find_duplicates(data):
+    """Find duplicate files. Uses size-based pre-filtering for speed —
+    only files sharing the same size are hashed (huge speedup for large drives)."""
+
+    # Step 1: Group files by size (only files with matching sizes can be duplicates)
+    size_groups = {}
+    for folder in data["folders"]:
+        for file in folder["files"]:
+            size = file["size_bytes"]
+            if size == 0:
+                continue  # skip empty files — they're all "duplicates" trivially
+            key = size
+            if key not in size_groups:
+                size_groups[key] = []
+            size_groups[key].append((folder["path"], file))
+
+    # Step 2: Only hash files where 2+ files share the same size
     hash_map = {}
     files_hashed = 0
 
-    for folder in data["folders"]:
-        for file in folder["files"]:
-            file_path = os.path.join(folder["path"], file["name"])
+    for size, file_list in size_groups.items():
+        if len(file_list) < 2:
+            continue  # unique size = unique file, skip hashing
+
+        for folder_path, file in file_list:
+            file_path = os.path.join(folder_path, file["name"])
             file_hash = get_file_hash(file_path)
             files_hashed += 1
 
@@ -224,7 +266,7 @@ def find_duplicates(data):
             hash_map[file_hash].append({
                 "path": file_path,
                 "name": file["name"],
-                "folder": folder["path"],
+                "folder": folder_path,
                 "extension": file["extension"],
                 "category": file["category"],
                 "icon": file["icon"],

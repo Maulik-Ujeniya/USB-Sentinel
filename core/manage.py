@@ -1,3 +1,9 @@
+import os
+import sys
+
+# Ensure core/ is on the import path regardless of where the script is launched from
+sys.path.insert(0, os.path.dirname(__file__))
+
 from db import list_all_drives, forget_drive
 
 def show_drives():

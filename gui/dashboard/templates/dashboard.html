@@ -3,14 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>USB-Sentinel — Inspection Report</title>
+<title>USB-Sentinel — Dashboard</title>
+<meta name="description" content="USB-Sentinel security dashboard — monitor, scan, and protect USB drives in real time.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root{
     --bg:#0A0E14; --panel:#121822; --panel-2:#0E141C; --border:#212B38;
     --ink:#E7ECF3; --muted:#7C879B;
-    --blue:#4FA6E8; --green:#33D6A6; --amber:#F0B94D; --red:#F2645C;
+    --blue:#4FA6E8; --green:#33D6A6; --amber:#F0B94D; --red:#F2645C; --purple:#A78BFA;
     --radius:10px;
   }
   @media (prefers-reduced-motion: reduce){ *{ animation:none !important; transition:none !important; } }
@@ -20,29 +21,44 @@
   h1,h2,h3{ font-family:'Space Grotesk',sans-serif; margin:0; }
   code, .mono{ font-family:'JetBrains Mono',monospace; }
   a{ color:inherit; text-decoration:none; }
-  button{ font-family:inherit; }
+  button{ font-family:inherit; cursor:pointer; }
   :focus-visible{ outline:2px solid var(--blue); outline-offset:2px; }
 
   .layout{ display:flex; min-height:100vh; }
 
-  .sidebar{ width:230px; flex-shrink:0; background:var(--panel-2); border-right:1px solid var(--border); padding:20px 16px; position:sticky; top:0; height:100vh; overflow-y:auto; }
+  /* SIDEBAR */
+  .sidebar{ width:230px; flex-shrink:0; background:var(--panel-2); border-right:1px solid var(--border); padding:20px 16px; position:sticky; top:0; height:100vh; overflow-y:auto; display:flex; flex-direction:column; }
   .brand{ display:block; font-size:16px; font-weight:700; letter-spacing:0.3px; margin-bottom:2px; }
   .brand span{ color:var(--blue); }
   .brand-sub{ color:var(--muted); font-size:11px; margin-bottom:22px; }
-  .nav-link{ display:flex; align-items:center; gap:10px; padding:10px 10px; border-radius:7px; color:var(--muted); font-size:13.5px; font-weight:500; margin-bottom:2px; }
+  .nav-link{ display:flex; align-items:center; gap:10px; padding:10px 10px; border-radius:7px; color:var(--muted); font-size:13.5px; font-weight:500; margin-bottom:2px; transition:background 0.15s, color 0.15s; }
   .nav-link:hover{ background:var(--panel); color:var(--ink); }
   .nav-link.active{ background:rgba(79,166,232,0.14); color:var(--blue); }
   .nav-icon{ font-size:14px; width:16px; text-align:center; }
+  .nav-spacer{ flex:1; }
 
-  .sidebar-info{ margin-top:22px; padding-top:16px; border-top:1px solid var(--border); }
+  .sidebar-info{ margin-top:auto; padding-top:16px; border-top:1px solid var(--border); }
   .sidebar-info .label{ color:var(--muted); font-size:10px; text-transform:uppercase; letter-spacing:0.6px; margin-bottom:3px; }
   .sidebar-info .val{ font-size:12px; word-break:break-all; margin-bottom:12px; }
 
+  /* MAIN */
   .main{ flex:1; padding:32px 40px 100px; max-width:1150px; }
   .panel{ background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); padding:24px 26px; margin-bottom:22px; scroll-margin-top:20px; }
   .panel h2{ font-size:18px; margin-bottom:16px; display:flex; align-items:center; gap:8px; }
   .panel-sub{ color:var(--muted); font-size:12.5px; margin-top:-14px; margin-bottom:16px; }
   .count-sub{ color:var(--muted); font-weight:400; font-size:12.5px; }
+
+  /* STATUS BAR */
+  .status-bar{ display:flex; align-items:center; gap:8px; padding:10px 16px; border-radius:8px; font-size:13px; margin-bottom:12px; border:1px solid var(--border); transition:all 0.3s; }
+  .status-bar.on{ background:rgba(51,214,166,0.08); border-color:rgba(51,214,166,0.3); color:var(--green); }
+  .status-bar.off{ background:rgba(242,100,92,0.08); border-color:rgba(242,100,92,0.3); color:var(--red); }
+  .status-bar code{ background:var(--panel-2); padding:2px 7px; border-radius:5px; color:var(--ink); }
+  .status-bar .start-btn{ background:var(--green); color:#0A0E14; border:none; padding:5px 14px; border-radius:6px; font-size:12px; font-weight:600; margin-left:auto; }
+  .status-bar .start-btn:hover{ opacity:0.85; }
+
+  /* SCAN STATUS */
+  .scan-status{ background:rgba(79,166,232,0.08); border:1px solid rgba(79,166,232,0.3); color:var(--blue); padding:10px 16px; border-radius:8px; font-size:13px; margin-bottom:12px; }
+  .scan-status .scan-file{ display:block; font-family:'JetBrains Mono',monospace; font-size:11.5px; color:var(--muted); margin-top:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
   /* HERO */
   .hero{ display:flex; gap:32px; align-items:center; flex-wrap:wrap; }
@@ -60,16 +76,71 @@
   .stat .num.amber{ color:var(--amber); }
 
   .capacity-bar{ height:11px; border-radius:6px; background:var(--border); overflow:hidden; margin:20px 0 8px; }
-  .capacity-fill{ height:100%; border-radius:6px; }
+  .capacity-fill{ height:100%; border-radius:6px; transition: width 0.5s ease; }
   .capacity-caption{ display:flex; justify-content:space-between; font-size:12.5px; color:var(--muted); }
   .capacity-caption b{ color:var(--ink); font-weight:500; }
 
+  /* LIVE DRIVES */
+  .drive-card{ background:var(--panel-2); border:1px solid var(--border); border-radius:8px; padding:16px; margin-bottom:10px; display:flex; align-items:center; gap:16px; transition:border-color 0.2s; }
+  .drive-card:hover{ border-color:var(--blue); }
+  .drive-card .drive-icon{ font-size:28px; }
+  .drive-card .drive-info{ flex:1; }
+  .drive-card .drive-name{ font-weight:600; font-size:14px; }
+  .drive-card .drive-detail{ color:var(--muted); font-size:12px; margin-top:2px; }
+  .drive-card .drive-detail .mono{ font-size:11px; }
+  .drive-usage-bar{ height:5px; background:var(--border); border-radius:3px; margin-top:6px; width:160px; }
+  .drive-usage-fill{ height:100%; border-radius:3px; background:var(--blue); }
+  .drive-card .drive-actions{ display:flex; gap:6px; }
+  .action-btn{ background:var(--panel); border:1px solid var(--border); color:var(--ink); padding:6px 12px; border-radius:6px; font-size:11.5px; font-weight:500; transition:all 0.15s; }
+  .action-btn:hover{ border-color:var(--blue); color:var(--blue); }
+  .action-btn.trust{ color:var(--green); } .action-btn.trust:hover{ border-color:var(--green); }
+  .action-btn.untrust{ color:var(--amber); } .action-btn.untrust:hover{ border-color:var(--amber); }
+  .action-btn.eject{ color:var(--red); } .action-btn.eject:hover{ border-color:var(--red); }
+  .action-btn.scan{ color:var(--blue); } .action-btn.scan:hover{ border-color:var(--blue); }
+  .badge-sm{ padding:2px 8px; border-radius:4px; font-size:10px; font-weight:600; }
+  .badge-sm.trusted{ background:rgba(51,214,166,0.14); color:var(--green); }
+  .badge-sm.blocked{ background:rgba(242,100,92,0.14); color:var(--red); }
+
+  /* LIVE SCAN MONITOR */
+  .scan-monitor{ border:1px solid var(--border); border-radius:8px; padding:18px; margin-bottom:10px; background:var(--panel-2); }
+  .scan-monitor.active{ border-color:rgba(79,166,232,0.4); }
+  .scan-monitor .scan-header{ display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+  .scan-monitor .scan-title{ font-weight:600; font-size:14px; }
+  .scan-progress-bar{ height:6px; background:var(--border); border-radius:3px; overflow:hidden; margin-bottom:8px; }
+  .scan-progress-fill{ height:100%; background:linear-gradient(90deg, var(--blue), var(--purple)); border-radius:3px; transition:width 0.3s; }
+  .scan-progress-fill.indeterminate{ width:30% !important; animation:indeterminate 1.5s ease-in-out infinite; }
+  @keyframes indeterminate{ 0%{transform:translateX(-100%);} 100%{transform:translateX(400%);} }
+  .scan-stats{ display:flex; gap:24px; font-size:12.5px; color:var(--muted); flex-wrap:wrap; }
+  .scan-stats b{ color:var(--ink); }
+  .scan-current-file{ font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--muted); margin-top:6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+  /* ACTIVITY LOG */
+  .activity-item{ display:flex; gap:12px; align-items:flex-start; padding:10px 0; border-bottom:1px solid var(--panel-2); font-size:13px; }
+  .activity-item:last-child{ border-bottom:none; }
+  .activity-dot{ width:8px; height:8px; border-radius:50%; margin-top:6px; flex-shrink:0; }
+  .activity-dot.insert{ background:var(--green); } .activity-dot.scan{ background:var(--blue); }
+  .activity-dot.threat{ background:var(--red); } .activity-dot.settings{ background:var(--amber); }
+  .activity-dot.default{ background:var(--muted); }
+  .activity-time{ color:var(--muted); font-size:11px; font-family:'JetBrains Mono',monospace; flex-shrink:0; width:70px; }
+  .activity-msg{ flex:1; }
+
+  /* SCAN HISTORY */
+  .history-row{ display:grid; grid-template-columns:90px 1fr 0.7fr 0.6fr 0.5fr 80px; gap:12px; padding:10px 0; border-bottom:1px solid var(--panel-2); font-size:12.5px; align-items:center; }
+  .history-row:last-child{ border-bottom:none; }
+  .history-head{ color:var(--muted); font-size:11px; text-transform:uppercase; letter-spacing:0.4px; border-bottom:1px solid var(--border); padding-bottom:8px; }
+  .history-badge{ padding:3px 8px; border-radius:5px; font-size:10px; font-weight:600; display:inline-block; }
+  .history-badge.complete{ background:rgba(51,214,166,0.14); color:var(--green); }
+  .history-badge.running{ background:rgba(79,166,232,0.14); color:var(--blue); }
+  .history-badge.error{ background:rgba(242,100,92,0.14); color:var(--red); }
+
   /* CATEGORY BAR */
   .catbar{ display:flex; height:36px; border-radius:6px; overflow:hidden; border:1px solid var(--border); margin-bottom:18px; }
-  .catbar .seg{ flex-basis:0; min-width:14px; display:flex; align-items:center; justify-content:center; overflow:hidden; }
+  .catbar .seg{ flex-basis:0; min-width:14px; display:flex; align-items:center; justify-content:center; overflow:hidden; cursor:pointer; transition:opacity 0.15s; }
+  .catbar .seg:hover{ opacity:0.85; }
   .seg-label{ font-size:11px; font-weight:600; color:#0A0E14; background:rgba(255,255,255,0.8); padding:2px 7px; border-radius:4px; white-space:nowrap; }
   .legend{ display:grid; grid-template-columns:repeat(auto-fill, minmax(170px,1fr)); gap:10px; }
-  .legend-item{ display:flex; align-items:center; gap:8px; font-size:13px; background:var(--panel-2); border:1px solid var(--border); border-radius:7px; padding:9px 12px; }
+  .legend-item{ display:flex; align-items:center; gap:8px; font-size:13px; background:var(--panel-2); border:1px solid var(--border); border-radius:7px; padding:9px 12px; transition:border-color 0.15s; }
+  .legend-item:hover{ border-color:var(--muted); }
   .legend-dot{ width:10px; height:10px; border-radius:3px; flex-shrink:0; }
   .legend-item .n{ color:var(--muted); font-size:11.5px; display:block; }
 
@@ -84,7 +155,8 @@
 
   /* CHANGES */
   .change-group{ border:1px solid var(--border); border-radius:8px; margin-bottom:8px; overflow:hidden; }
-  .change-group summary{ list-style:none; cursor:pointer; padding:12px 14px; background:var(--panel-2); font-size:13.5px; font-weight:500; }
+  .change-group summary{ list-style:none; cursor:pointer; padding:12px 14px; background:var(--panel-2); font-size:13.5px; font-weight:500; transition:background 0.15s; }
+  .change-group summary:hover{ background:var(--panel); }
   .change-group summary::-webkit-details-marker{ display:none; }
   .change-group summary .chev{ color:var(--muted); font-size:11px; margin-right:6px; transition:transform 0.15s; }
   .change-group[open] summary .chev{ transform:rotate(90deg); }
@@ -96,7 +168,8 @@
 
   /* DUPLICATES */
   .dupgroup{ border:1px solid var(--border); border-radius:8px; margin-bottom:10px; overflow:hidden; }
-  .dupgroup summary{ list-style:none; cursor:pointer; padding:13px 15px; display:flex; justify-content:space-between; align-items:center; background:var(--panel-2); font-size:13.5px; }
+  .dupgroup summary{ list-style:none; cursor:pointer; padding:13px 15px; display:flex; justify-content:space-between; align-items:center; background:var(--panel-2); font-size:13.5px; transition:background 0.15s; }
+  .dupgroup summary:hover{ background:var(--panel); }
   .dupgroup summary::-webkit-details-marker{ display:none; }
   .dupgroup summary .chev{ color:var(--muted); font-size:11px; margin-right:6px; transition:transform 0.15s; }
   .dupgroup[open] summary .chev{ transform:rotate(90deg); }
@@ -111,7 +184,7 @@
   /* LARGEST FILES */
   .controls-row{ display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:16px; }
   .btn-group{ display:flex; gap:6px; }
-  .count-btn, .filter-btn{ background:var(--panel-2); border:1px solid var(--border); color:var(--muted); padding:7px 13px; border-radius:7px; cursor:pointer; font-size:12.5px; }
+  .count-btn, .filter-btn{ background:var(--panel-2); border:1px solid var(--border); color:var(--muted); padding:7px 13px; border-radius:7px; cursor:pointer; font-size:12.5px; transition:all 0.15s; }
   .count-btn:hover, .filter-btn:hover{ color:var(--ink); }
   .count-btn.active{ background:rgba(79,166,232,0.14); border-color:var(--blue); color:var(--blue); }
   .rank-row{ display:grid; grid-template-columns:24px 1fr 100px; gap:12px; align-items:center; padding:10px 0; border-bottom:1px solid var(--border); }
@@ -120,12 +193,13 @@
   .rank-path{ font-family:'JetBrains Mono'; font-size:12.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .rank-folder{ font-size:10.5px; color:var(--muted); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .rank-bar-bg{ height:4px; background:var(--border); border-radius:2px; margin-top:6px; }
-  .rank-bar{ height:100%; background:var(--blue); border-radius:2px; }
+  .rank-bar{ height:100%; background:var(--blue); border-radius:2px; transition:width 0.3s; }
   .rank-size{ font-family:'JetBrains Mono'; font-size:12.5px; color:var(--ink); text-align:right; }
 
   /* FILE TABLE */
   .controls{ position:sticky; top:0; background:var(--panel); z-index:5; padding-bottom:14px; display:flex; gap:8px; flex-wrap:wrap; }
   #searchBox{ background:var(--panel-2); border:1px solid var(--border); color:var(--ink); padding:9px 13px; border-radius:7px; width:250px; font-size:13.5px; font-family:inherit; }
+  #searchBox::placeholder{ color:var(--muted); }
   .filter-btn.active{ background:rgba(79,166,232,0.14); border-color:var(--blue); color:var(--blue); }
   .result-count{ color:var(--muted); font-size:12px; margin-bottom:10px; }
 
@@ -150,83 +224,109 @@
   .f-detail .row{ margin-bottom:4px; }
   .f-detail .sig-yes{ color:var(--green); } .f-detail .sig-no{ color:var(--amber); }
 
+  /* EMPTY STATE */
   .empty-state{ text-align:center; padding:80px 20px; color:var(--muted); }
   .empty-state h2{ color:var(--ink); margin-bottom:8px; }
   .empty-state code{ background:var(--panel); padding:2px 8px; border-radius:5px; }
 
-  .back-to-top{ position:fixed; bottom:24px; right:24px; width:44px; height:44px; border-radius:50%;
+  /* TOAST */
+  .toast-container{ position:fixed; bottom:24px; right:24px; z-index:1000; display:flex; flex-direction:column; gap:8px; }
+  .toast{ background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:12px 18px; font-size:13px; box-shadow:0 8px 24px rgba(0,0,0,0.4); animation:toastIn 0.3s ease; display:flex; align-items:center; gap:8px; max-width:400px; }
+  .toast.success{ border-color:rgba(51,214,166,0.4); } .toast.error{ border-color:rgba(242,100,92,0.4); } .toast.info{ border-color:rgba(79,166,232,0.4); }
+  @keyframes toastIn{ from{transform:translateY(20px);opacity:0;} to{transform:translateY(0);opacity:1;} }
+
+  .back-to-top{ position:fixed; bottom:24px; left:24px; width:44px; height:44px; border-radius:50%;
     background:var(--blue); color:#0A0E14; border:none; font-size:18px; cursor:pointer;
     opacity:0; pointer-events:none; transition:opacity 0.2s, transform 0.2s; transform:translateY(10px); }
   .back-to-top.visible{ opacity:1; pointer-events:auto; transform:translateY(0); }
+
+  /* Spinner */
+  .spinner{ display:inline-block; width:14px; height:14px; border:2px solid var(--border); border-top-color:var(--blue); border-radius:50%; animation:spin 0.6s linear infinite; }
+  @keyframes spin{ to{transform:rotate(360deg);} }
+
+  /* Scan drive selector */
+  .scan-input-row{ display:flex; gap:8px; margin-bottom:16px; align-items:center; }
+  .scan-input-row select, .scan-input-row input{ background:var(--panel-2); border:1px solid var(--border); color:var(--ink); padding:9px 13px; border-radius:7px; font-size:13px; font-family:inherit; }
+  .scan-input-row select{ min-width:180px; }
+  .scan-input-row input{ flex:1; }
+  .scan-btn{ background:var(--blue); color:#0A0E14; border:none; padding:9px 18px; border-radius:7px; font-weight:600; font-size:13px; transition:opacity 0.15s; }
+  .scan-btn:hover{ opacity:0.85; }
+  .scan-btn:disabled{ opacity:0.5; cursor:not-allowed; }
+  .scan-btn.virus{ background:var(--amber); }
 
   @media (max-width: 860px){
     .layout{ flex-direction:column; }
     .sidebar{ position:static; width:100%; height:auto; display:flex; align-items:center; gap:2px; overflow-x:auto; padding:14px 16px; }
     .sidebar-info{ display:none; }
     .brand, .brand-sub{ display:none; }
+    .nav-spacer{ display:none; }
     .main{ padding:20px 16px 60px; }
     .file-head{ display:none; }
     details.file-row summary{ grid-template-columns:16px 1fr 70px; }
     .f-cat span.txt, .f-folder{ display:none; }
     .dup-file, .change-item{ grid-template-columns:50px 1fr 70px; }
     .dup-folder, .ci-folder{ display:none; }
+    .drive-card{ flex-wrap:wrap; }
+    .history-row{ grid-template-columns:1fr 1fr 80px; }
+    .history-row span:nth-child(4), .history-row span:nth-child(5){ display:none; }
   }
-    .status-bar{ display:flex; align-items:center; gap:8px; padding:10px 16px; border-radius:8px; font-size:13px; margin-bottom:20px; border:1px solid var(--border); }
-    .status-bar.on{ background:rgba(51,214,166,0.08); border-color:rgba(51,214,166,0.3); color:var(--green); }
-    .status-bar.off{ background:rgba(242,100,92,0.08); border-color:rgba(242,100,92,0.3); color:var(--red); }
-    .status-bar code{ background:var(--panel-2); padding:2px 7px; border-radius:5px; color:var(--ink); }
-    .scan-status{ background:rgba(79,166,232,0.08); border:1px solid rgba(79,166,232,0.3); color:var(--blue); padding:10px 16px; border-radius:8px; font-size:13px; margin-bottom:20px; }
-    .scan-status .scan-file{ display:block; font-family:'JetBrains Mono',monospace; font-size:11.5px; color:var(--muted); margin-top:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 </style>
-
 </head>
 <body>
-
-{% if not data %}
-  <div class="empty-state">
-    <h2>No scan data yet</h2>
-    <p>Run <code>python core/analyzer.py</code>, scan a drive, then refresh this page.</p>
-  </div>
-{% else %}
-
-{% set total = data.total_size | default(0) %}
-{% set wasted = data.wasted_bytes | default(0) %}
-{% set du = data.disk_usage %}
-{% set pct_used = du.percent_used if du else 0 %}
-{% set ring_color = 'var(--red)' if pct_used > 90 else ('var(--amber)' if pct_used > 70 else 'var(--blue)') %}
 
 <div class="layout">
   <nav class="sidebar">
     <a href="#overview" class="brand">USB-<span>Sentinel</span></a>
-    <div class="brand-sub">Inspection Report</div>
+    <div class="brand-sub">Security Dashboard</div>
 
     <a class="nav-link" href="#overview"><span class="nav-icon">▣</span>Overview</a>
+    <a class="nav-link" href="#live-drives"><span class="nav-icon">💾</span>Live Drives</a>
+    <a class="nav-link" href="#scan-monitor"><span class="nav-icon">🔍</span>Scan Monitor</a>
     <a class="nav-link" href="#files"><span class="nav-icon">🗂</span>All Files</a>
     <a class="nav-link" href="#duplicates"><span class="nav-icon">⧉</span>Duplicates</a>
     <a class="nav-link" href="#largest"><span class="nav-icon">📶</span>Largest Files</a>
     <a class="nav-link" href="#changes"><span class="nav-icon">↺</span>Changes</a>
+    <a class="nav-link" href="#activity"><span class="nav-icon">📋</span>Activity Log</a>
+    <a class="nav-link" href="#history"><span class="nav-icon">🕐</span>Scan History</a>
     <a class="nav-link" href="/settings"><span class="nav-icon">⚙</span>Settings</a>
 
+    <div class="nav-spacer"></div>
+
+    {% if data %}
     <div class="sidebar-info">
       <div class="label">Drive / Folder</div>
       <div class="val mono">{{ data.drive_path }}</div>
       <div class="label">Scanned</div>
       <div class="val mono">{{ data.scan_date[:19] }}</div>
     </div>
+    {% endif %}
   </nav>
 
   <main class="main">
-    <main class="main">
 
+    <!-- Status Bar -->
     <div class="status-bar {{ 'on' if status.active else 'off' }}" id="statusBar">
-      {% if status.active %}🟢 Protection is running — USB-Sentinel is actively watching for drives
-      {% else %}🔴 Protection is not running — start it with <code>python core/detector.py</code>{% endif %}
+      {% if status.active %}
+        🟢 Protection is running — USB-Sentinel is actively watching for drives
+      {% else %}
+        🔴 Protection is not running
+        <button class="start-btn" onclick="startProtection()">▶ Start Protection</button>
+      {% endif %}
     </div>
+
+    <!-- Live Scan Status -->
     <div class="scan-status" id="scanStatus" style="display:none;"></div>
 
-    <section id="overview" class="panel">
+    <!-- ==================== OVERVIEW ==================== -->
+    {% if data %}
+    {% set total = data.total_size | default(0) %}
+    {% set wasted = data.wasted_bytes | default(0) %}
+    {% set du = data.disk_usage %}
+    {% set pct_used = du.percent_used if du else 0 %}
+    {% set ring_color = 'var(--red)' if pct_used > 90 else ('var(--amber)' if pct_used > 70 else 'var(--blue)') %}
 
     <section id="overview" class="panel">
+      <h2>▣ Overview</h2>
       <div class="hero">
         <div class="stamp" style="--pct:{{ pct_used }}; --ring-color:{{ ring_color }};">
           <div class="stamp-inner">
@@ -251,7 +351,52 @@
       </div>
       {% endif %}
     </section>
+    {% endif %}
 
+    <!-- ==================== LIVE CONNECTED DRIVES ==================== -->
+    <section id="live-drives" class="panel">
+      <h2>💾 Connected Drives <span class="count-sub" id="driveCount"></span></h2>
+      <div class="scan-input-row">
+        <input type="text" id="customScanPath" placeholder="Enter drive path (e.g. F:\)">
+        <button class="scan-btn" onclick="startFileScan()" id="fileScanBtn">📊 Scan Files</button>
+        <button class="scan-btn virus" onclick="startVirusScan()" id="virusScanBtn">🛡️ Virus Scan</button>
+      </div>
+      <div id="liveDrivesList">
+        <div class="empty-note"><span class="spinner"></span> Loading connected drives...</div>
+      </div>
+    </section>
+
+    <!-- ==================== SCAN MONITOR ==================== -->
+    <section id="scan-monitor" class="panel">
+      <h2>🔍 Live Scan Monitor</h2>
+      <div id="scanMonitorContent">
+        <div class="empty-note">No scans running. Use the buttons above to start a scan.</div>
+      </div>
+    </section>
+
+    <!-- ==================== STORAGE BREAKDOWN ==================== -->
+    {% if data %}
+    <section class="panel">
+      <h2>📊 Storage Breakdown</h2>
+      <div class="catbar">
+        {% for cat, info in data.category_summary.items() %}
+          {% set pct = ((info.total_size / total * 100) if total else 0) %}
+          <div class="seg chip" data-cat="{{ cat }}" style="--grow:{{ pct if pct > 0 else 0.2 }};" title="{{ cat }}: {{ info.count }} files · {{ info.total_size_readable }} ({{ pct | round(1) }}%)">
+            {% if pct > 9 %}<span class="seg-label">{{ cat }}</span>{% endif %}
+          </div>
+        {% endfor %}
+      </div>
+      <div class="legend">
+        {% for cat, info in data.category_summary.items() %}
+        <div class="legend-item chip" data-cat="{{ cat }}">
+          <span class="legend-dot"></span>
+          <span>{{ cat }}<span class="n">{{ info.count }} files · {{ info.total_size_readable }}</span></span>
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+
+    <!-- ==================== ALL FILES ==================== -->
     <section id="files" class="panel">
       <h2>🗂 All Files</h2>
       <div class="controls">
@@ -311,26 +456,7 @@
       </div>
     </section>
 
-    <section class="panel">
-      <h2>Storage Breakdown</h2>
-      <div class="catbar">
-        {% for cat, info in data.category_summary.items() %}
-          {% set pct = ((info.total_size / total * 100) if total else 0) %}
-          <div class="seg chip" data-cat="{{ cat }}" style="--grow:{{ pct if pct > 0 else 0.2 }};" title="{{ cat }}: {{ info.count }} files · {{ info.total_size_readable }} ({{ pct | round(1) }}%)">
-            {% if pct > 9 %}<span class="seg-label">{{ cat }}</span>{% endif %}
-          </div>
-        {% endfor %}
-      </div>
-      <div class="legend">
-        {% for cat, info in data.category_summary.items() %}
-        <div class="legend-item chip" data-cat="{{ cat }}">
-          <span class="legend-dot"></span>
-          <span>{{ cat }}<span class="n">{{ info.count }} files · {{ info.total_size_readable }}</span></span>
-        </div>
-        {% endfor %}
-      </div>
-    </section>
-
+    <!-- ==================== DUPLICATES ==================== -->
     <section id="duplicates" class="panel">
       <h2>⧉ Duplicate Files <span class="count-sub">({{ data.duplicates|length }} groups)</span></h2>
       {% if data.duplicates %}
@@ -363,6 +489,7 @@
       {% endif %}
     </section>
 
+    <!-- ==================== LARGEST FILES ==================== -->
     <section id="largest" class="panel">
       <h2>📶 Largest Files</h2>
       <div class="controls-row">
@@ -394,6 +521,7 @@
       {% endif %}
     </section>
 
+    <!-- ==================== CHANGES ==================== -->
     <section id="changes" class="panel">
       <h2>↺ Changes Since Last Scan</h2>
       {% if data.changes %}
@@ -422,147 +550,473 @@
       {% endif %}
     </section>
 
+    {% else %}
+    <!-- No data state -->
+    <section id="overview" class="panel">
+      <div class="empty-state" style="padding:40px 20px;">
+        <h2>Welcome to USB-Sentinel</h2>
+        <p>No scan data yet. Connect a USB drive and use the controls below to scan it, or enter a drive path manually.</p>
+      </div>
+    </section>
+    <section id="live-drives" class="panel">
+      <h2>💾 Connected Drives <span class="count-sub" id="driveCount"></span></h2>
+      <div class="scan-input-row">
+        <input type="text" id="customScanPath" placeholder="Enter drive path (e.g. F:\)">
+        <button class="scan-btn" onclick="startFileScan()" id="fileScanBtn">📊 Scan Files</button>
+        <button class="scan-btn virus" onclick="startVirusScan()" id="virusScanBtn">🛡️ Virus Scan</button>
+      </div>
+      <div id="liveDrivesList">
+        <div class="empty-note"><span class="spinner"></span> Loading connected drives...</div>
+      </div>
+    </section>
+    <section id="scan-monitor" class="panel">
+      <h2>🔍 Live Scan Monitor</h2>
+      <div id="scanMonitorContent">
+        <div class="empty-note">No scans running. Use the buttons above to start a scan.</div>
+      </div>
+    </section>
+    {% endif %}
+
+    <!-- ==================== ACTIVITY LOG ==================== -->
+    <section id="activity" class="panel">
+      <h2>📋 Activity Log <span class="count-sub" id="activityCount"></span></h2>
+      <div id="activityList">
+        <div class="empty-note"><span class="spinner"></span> Loading...</div>
+      </div>
+    </section>
+
+    <!-- ==================== SCAN HISTORY ==================== -->
+    <section id="history" class="panel">
+      <h2>🕐 Scan History <span class="count-sub" id="historyCount"></span></h2>
+      <div id="scanHistoryList">
+        <div class="empty-note"><span class="spinner"></span> Loading...</div>
+      </div>
+    </section>
+
   </main>
 </div>
 
+<div class="toast-container" id="toastContainer"></div>
 <button class="back-to-top" id="backToTop" aria-label="Back to top">↑</button>
 
 <script>
-  // Search + category filter
-  const searchBox = document.getElementById("searchBox");
-  const filterBtns = document.querySelectorAll(".controls .filter-btn");
-  const fileRows = document.querySelectorAll("#fileList .file-row");
-  const resultCount = document.getElementById("resultCount");
-  let activeCategory = "all";
+// ==================== Toast System ====================
+function showToast(msg, type='info', duration=4000){
+  const c = document.getElementById('toastContainer');
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.innerHTML = msg;
+  c.appendChild(t);
+  setTimeout(() => { t.style.opacity='0'; t.style.transform='translateY(10px)'; setTimeout(()=>t.remove(),300); }, duration);
+}
 
-  function applyFilters(){
-    const query = searchBox.value.toLowerCase();
-    let visible = 0;
-    fileRows.forEach(row => {
-      const matchesCategory = activeCategory === "all" || row.dataset.category === activeCategory;
-      const matchesSearch = row.dataset.name.includes(query);
-      const show = matchesCategory && matchesSearch;
-      row.style.display = show ? "" : "none";
-      if (show) visible++;
-    });
-    resultCount.textContent = `Showing ${visible} of ${fileRows.length} files`;
-  }
-  searchBox.addEventListener("input", applyFilters);
-  filterBtns.forEach(btn => {
-    btn.addEventListener("click", () => {
-      filterBtns.forEach(b => b.classList.remove("active"));
-      btn.classList.add("active");
-      activeCategory = btn.dataset.cat;
-      applyFilters();
-    });
-  });
-  applyFilters();
+// ==================== Protection ====================
+async function startProtection(){
+  try {
+    const res = await fetch('/api/protection/start', {method:'POST'});
+    const d = await res.json();
+    if(d.ok) showToast('🟢 Protection started!','success');
+  } catch(e){ showToast('❌ Failed to start protection','error'); }
+}
 
-  // Sortable All Files headers
-  let fileSortAsc = true;
-  document.querySelectorAll(".sort-head").forEach(head => {
-    head.addEventListener("click", () => {
-      const key = head.dataset.key;
-      const list = document.getElementById("fileList");
-      const items = Array.from(list.querySelectorAll(".file-row"));
-      fileSortAsc = !fileSortAsc;
-      items.sort((a, b) => {
-        let av, bv;
-        if (key === "size"){ av = +a.dataset.size; bv = +b.dataset.size; }
-        else { av = a.dataset.name; bv = b.dataset.name; }
-        if (av < bv) return fileSortAsc ? -1 : 1;
-        if (av > bv) return fileSortAsc ? 1 : -1;
-        return 0;
-      });
-      items.forEach(item => list.appendChild(item));
-    });
-  });
+// ==================== Live Drives ====================
+async function loadLiveDrives(){
+  try {
+    const res = await fetch('/api/drives/live');
+    const d = await res.json();
+    const el = document.getElementById('liveDrivesList');
+    const countEl = document.getElementById('driveCount');
 
-  // Largest Files: count + sort controls
-  (function(){
-    const container = document.getElementById("largestList");
-    if (!container) return;
-    const rows = Array.from(container.querySelectorAll(".rank-row"));
-    const countBtns = document.querySelectorAll(".count-btn");
-    const sortBtn = document.getElementById("sortToggle");
-    let sortDesc = true;
-    let showCount = 10;
-
-    function render(){
-      const sorted = rows.slice().sort((a, b) => {
-        const av = +a.dataset.size, bv = +b.dataset.size;
-        return sortDesc ? bv - av : av - bv;
-      });
-      sorted.forEach((row, i) => {
-        container.appendChild(row);
-        row.querySelector(".rank-num").textContent = i + 1;
-        row.style.display = (showCount === "all" || i < showCount) ? "" : "none";
-      });
+    if(!d.drives || d.drives.length === 0){
+      el.innerHTML = '<div class="empty-note">No removable drives detected. Insert a USB drive to see it here.</div>';
+      if(countEl) countEl.textContent = '(0 connected)';
+      return;
     }
-    countBtns.forEach(btn => btn.addEventListener("click", () => {
-      countBtns.forEach(b => b.classList.remove("active"));
-      btn.classList.add("active");
-      showCount = btn.dataset.count === "all" ? "all" : parseInt(btn.dataset.count, 10);
-      render();
-    }));
-    sortBtn.addEventListener("click", () => {
-      sortDesc = !sortDesc;
-      sortBtn.textContent = sortDesc ? "Largest → Smallest" : "Smallest → Largest";
-      render();
-    });
-    render();
-  })();
+    if(countEl) countEl.textContent = `(${d.drives.length} connected)`;
 
-  // Sidebar scrollspy
-  const navLinks = document.querySelectorAll(".nav-link");
-  const sections = [...navLinks].map(l => document.querySelector(l.getAttribute("href"))).filter(Boolean);
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting){
-        const id = "#" + entry.target.id;
-        navLinks.forEach(l => l.classList.toggle("active", l.getAttribute("href") === id));
+    el.innerHTML = d.drives.map(dr => {
+      const usageBar = dr.usage ? `<div class="drive-usage-bar"><div class="drive-usage-fill" style="width:${dr.usage.percent}%;"></div></div>` : '';
+      const usageText = dr.usage ? `${dr.usage.used} / ${dr.usage.total} (${dr.usage.percent}%)` : 'N/A';
+      const badge = dr.trusted ? '<span class="badge-sm trusted">Trusted</span>' : '<span class="badge-sm blocked">Not Trusted</span>';
+      const trustBtn = dr.serial ? (dr.trusted
+        ? `<button class="action-btn untrust" onclick="toggleTrust('${dr.serial}',false)">Untrust</button>`
+        : `<button class="action-btn trust" onclick="toggleTrust('${dr.serial}',true)">Trust</button>`) : '';
+
+      return `<div class="drive-card">
+        <div class="drive-icon">💾</div>
+        <div class="drive-info">
+          <div class="drive-name">${dr.device} ${badge}</div>
+          <div class="drive-detail">Serial: <span class="mono">${dr.serial||'Unknown'}</span> · FS: ${dr.fstype} · ${usageText}</div>
+          ${usageBar}
+        </div>
+        <div class="drive-actions">
+          ${trustBtn}
+          <button class="action-btn scan" onclick="scanDrive('${dr.mountpoint.replace(/\\/g,'\\\\\\\\')}')">Scan</button>
+          <button class="action-btn eject" onclick="ejectDrive('${dr.device.replace(/\\/g,'\\\\\\\\')}')">⏏ Eject</button>
+        </div>
+      </div>`;
+    }).join('');
+  } catch(e){ console.error('Drive load error:', e); }
+}
+
+async function toggleTrust(serial, trust){
+  try {
+    await fetch('/api/drives/trust', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({serial,trust})});
+    showToast(trust ? '✅ Drive trusted' : '⚠️ Drive untrusted', trust?'success':'info');
+    loadLiveDrives();
+  } catch(e){ showToast('❌ Failed','error'); }
+}
+
+async function ejectDrive(letter){
+  try {
+    await fetch('/api/drives/eject', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({drive_letter:letter})});
+    showToast('⏏ Drive ejected','success');
+    setTimeout(loadLiveDrives, 1000);
+  } catch(e){ showToast('❌ Eject failed','error'); }
+}
+
+function scanDrive(path){
+  const input = document.getElementById('customScanPath');
+  if(input) input.value = path;
+  startFileScan();
+}
+
+// ==================== Scans ====================
+function getScanPath(){
+  const input = document.getElementById('customScanPath');
+  return input ? input.value.trim() : '';
+}
+
+async function startFileScan(){
+  const path = getScanPath();
+  if(!path){ showToast('⚠️ Enter a drive path first','error'); return; }
+  const btn = document.getElementById('fileScanBtn');
+  if(btn) btn.disabled = true;
+  try {
+    const res = await fetch('/api/scan/drive', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({drive_path:path})});
+    const d = await res.json();
+    if(d.error){ showToast(`❌ ${d.error}`,'error'); if(btn) btn.disabled=false; return; }
+    showToast(`🔍 File scan started for ${path}`,'info');
+  } catch(e){ showToast('❌ Failed to start scan','error'); if(btn) btn.disabled=false; }
+}
+
+async function startVirusScan(){
+  const path = getScanPath();
+  if(!path){ showToast('⚠️ Enter a drive path first','error'); return; }
+  const btn = document.getElementById('virusScanBtn');
+  if(btn) btn.disabled = true;
+  try {
+    const res = await fetch('/api/scan/virus', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({drive_path:path})});
+    const d = await res.json();
+    if(d.error){ showToast(`❌ ${d.error}`,'error'); if(btn) btn.disabled=false; return; }
+    showToast(`🛡️ Virus scan started for ${path}`,'info');
+  } catch(e){ showToast('❌ Failed to start scan','error'); if(btn) btn.disabled=false; }
+}
+
+// ==================== Scan Monitor ====================
+async function pollScanProgress(){
+  try {
+    const res = await fetch('/api/scan/progress');
+    const d = await res.json();
+    const el = document.getElementById('scanMonitorContent');
+    const scans = d.scans || {};
+    const keys = Object.keys(scans);
+
+    if(keys.length === 0){
+      el.innerHTML = '<div class="empty-note">No scans running. Use the buttons above to start a scan.</div>';
+      // Re-enable buttons
+      const fb = document.getElementById('fileScanBtn'); if(fb) fb.disabled = false;
+      const vb = document.getElementById('virusScanBtn'); if(vb) vb.disabled = false;
+      return;
+    }
+
+    let html = '';
+    let anyActive = false;
+    keys.forEach(key => {
+      const s = scans[key];
+      const isActive = s.active;
+      if(isActive) anyActive = true;
+
+      if(s.type === 'file_scan'){
+        const progress = isActive ? '<div class="scan-progress-fill indeterminate" style="width:30%;"></div>' : '<div class="scan-progress-fill" style="width:100%;"></div>';
+        const statusText = isActive
+          ? `Scanning <b>${s.drive_path}</b> — ${s.files_scanned} files found in ${s.folders_scanned} folders`
+          : (s.result && s.result.error ? `❌ ${s.result.error}` : `✅ Scan complete — ${s.result?.total_files||0} files, ${s.result?.total_size_readable||''}`);
+        const currentFolder = isActive && s.current_folder ? `<div class="scan-current-file">📁 ${s.current_folder}</div>` : '';
+
+        html += `<div class="scan-monitor ${isActive?'active':''}">
+          <div class="scan-header"><span class="scan-title">📊 File Scan</span><span style="color:var(--muted);font-size:12px;">${s.started_at?.substring(11,19)||''}</span></div>
+          <div class="scan-progress-bar">${progress}</div>
+          <div class="scan-stats">${statusText}</div>
+          ${currentFolder}
+        </div>`;
+      } else if(s.type === 'virus_scan'){
+        // Use the DB-stored status
+        html += renderVirusScanMonitor(s);
       }
     });
-  }, { rootMargin: "-20% 0px -70% 0px" });
-  sections.forEach(s => observer.observe(s));
 
-  // Back to top
-  const backToTop = document.getElementById("backToTop");
-  window.addEventListener("scroll", () => backToTop.classList.toggle("visible", window.scrollY > 400));
-  backToTop.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
-  async function pollStatus(){
+    // Also check virus scan status from DB
     try {
-      const res = await fetch('/api/status');
-      const d = await res.json();
-      const bar = document.getElementById('statusBar');
-      if (d.protection.active){
-        bar.className = 'status-bar on';
-        bar.innerHTML = '🟢 Protection is running — USB-Sentinel is actively watching for drives';
-      } else {
-        bar.className = 'status-bar off';
-        bar.innerHTML = '🔴 Protection is not running — start it with <code>python core/detector.py</code>';
+      const statusRes = await fetch('/api/status');
+      const statusData = await statusRes.json();
+      if(statusData.scan && statusData.scan.active && !keys.some(k=>scans[k].type==='virus_scan' && scans[k].active)){
+        html += renderVirusScanFromStatus(statusData.scan);
+        anyActive = true;
       }
-      const scanBox = document.getElementById('scanStatus');
-      if (d.scan && d.scan.active){
-        scanBox.style.display = 'block';
-        scanBox.innerHTML = `🔍 Scanning <b>${d.scan.drive}</b> — ${d.scan.files_scanned} files checked (${d.scan.elapsed_seconds}s elapsed)` +
-          (d.scan.current_file ? `<span class="scan-file">${d.scan.current_file}</span>` : '');
-      } else if (d.scan && d.scan.result){
-        scanBox.style.display = 'block';
-        const r = d.scan.result;
-        if (r.error){ scanBox.innerHTML = `⚠️ Last scan of <b>${d.scan.drive}</b>: ${r.error}`; }
-        else if (r.clean){ scanBox.innerHTML = `✅ Last scan of <b>${d.scan.drive}</b> complete — no threats found (${r.files_scanned} files, ${r.time_taken_seconds}s)`; }
-        else { scanBox.innerHTML = `⚠️ Last scan of <b>${d.scan.drive}</b> found ${r.infected_count} threat(s)`; }
-      } else {
-        scanBox.style.display = 'none';
-      }
-    } catch(e) {}
+    } catch(e){}
+
+    if(!anyActive){
+      const fb = document.getElementById('fileScanBtn'); if(fb) fb.disabled = false;
+      const vb = document.getElementById('virusScanBtn'); if(vb) vb.disabled = false;
+    }
+
+    el.innerHTML = html || '<div class="empty-note">No scans running.</div>';
+  } catch(e){ console.error('Scan poll error:', e); }
+}
+
+function renderVirusScanMonitor(s){
+  const isActive = s.active;
+  const progress = isActive ? '<div class="scan-progress-fill indeterminate" style="width:30%;"></div>' : '<div class="scan-progress-fill" style="width:100%;"></div>';
+  let statusText = '';
+  if(isActive){
+    statusText = `Scanning <b>${s.drive_path}</b>`;
+  } else if(s.result){
+    if(s.result.error) statusText = `❌ ${s.result.error}`;
+    else if(s.result.clean) statusText = `✅ No threats found — ${s.result.files_scanned} files scanned (${s.result.time_taken_seconds}s)`;
+    else statusText = `⚠️ <span style="color:var(--red);">${s.result.infected_count} threat(s) found!</span>`;
   }
-  pollStatus();
-  setInterval(pollStatus, 2000);
+  return `<div class="scan-monitor ${isActive?'active':''}">
+    <div class="scan-header"><span class="scan-title">🛡️ Virus Scan</span><span style="color:var(--muted);font-size:12px;">${s.started_at?.substring(11,19)||''}</span></div>
+    <div class="scan-progress-bar">${progress}</div>
+    <div class="scan-stats">${statusText}</div>
+  </div>`;
+}
+
+function renderVirusScanFromStatus(s){
+  return `<div class="scan-monitor active">
+    <div class="scan-header"><span class="scan-title">🛡️ Virus Scan</span></div>
+    <div class="scan-progress-bar"><div class="scan-progress-fill indeterminate" style="width:30%;"></div></div>
+    <div class="scan-stats">Scanning <b>${s.drive}</b> — ${s.files_scanned} files checked (${s.elapsed_seconds}s)</div>
+    ${s.current_file ? `<div class="scan-current-file">${s.current_file}</div>` : ''}
+  </div>`;
+}
+
+// ==================== Activity Log ====================
+async function loadActivity(){
+  try {
+    const res = await fetch('/api/activity?limit=50');
+    const d = await res.json();
+    const el = document.getElementById('activityList');
+    const countEl = document.getElementById('activityCount');
+    if(!d.log || d.log.length === 0){
+      el.innerHTML = '<div class="empty-note">No activity recorded yet. Events will appear here as you use USB-Sentinel.</div>';
+      if(countEl) countEl.textContent = '';
+      return;
+    }
+    if(countEl) countEl.textContent = `(${d.log.length} events)`;
+
+    el.innerHTML = d.log.map(ev => {
+      const dotClass = ev.event_type.includes('insert') || ev.event_type.includes('trust') ? 'insert'
+        : ev.event_type.includes('scan') ? 'scan'
+        : ev.event_type.includes('threat') ? 'threat'
+        : ev.event_type.includes('setting') ? 'settings'
+        : 'default';
+      const time = ev.timestamp ? ev.timestamp.substring(11,19) : '';
+      return `<div class="activity-item">
+        <div class="activity-dot ${dotClass}"></div>
+        <div class="activity-time">${time}</div>
+        <div class="activity-msg">${ev.message}</div>
+      </div>`;
+    }).join('');
+  } catch(e){ console.error('Activity load error:', e); }
+}
+
+// ==================== Scan History ====================
+async function loadScanHistory(){
+  try {
+    const res = await fetch('/api/scan/history');
+    const d = await res.json();
+    const el = document.getElementById('scanHistoryList');
+    const countEl = document.getElementById('historyCount');
+    if(!d.history || d.history.length === 0){
+      el.innerHTML = '<div class="empty-note">No scans performed yet.</div>';
+      if(countEl) countEl.textContent = '';
+      return;
+    }
+    if(countEl) countEl.textContent = `(${d.history.length} scans)`;
+
+    const headHtml = `<div class="history-row history-head"><span>Type</span><span>Path</span><span>Started</span><span>Files</span><span>Issues</span><span>Status</span></div>`;
+
+    el.innerHTML = headHtml + d.history.map(h => {
+      const typeLabel = h.scan_type === 'virus_scan' ? '🛡️ Virus' : '📊 Files';
+      const badge = h.status === 'complete' ? '<span class="history-badge complete">Complete</span>'
+        : h.status === 'running' ? '<span class="history-badge running">Running</span>'
+        : '<span class="history-badge error">Error</span>';
+      const issues = h.infected_count > 0 ? `<span style="color:var(--red);">${h.infected_count} threats</span>`
+        : h.duplicate_groups > 0 ? `${h.duplicate_groups} dup groups` : '—';
+      const started = h.started_at ? h.started_at.substring(5,16).replace('T',' ') : '';
+
+      return `<div class="history-row">
+        <span>${typeLabel}</span>
+        <span class="mono" style="font-size:11.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${h.drive_path}</span>
+        <span style="font-size:12px;color:var(--muted);">${started}</span>
+        <span>${h.files_scanned}</span>
+        <span>${issues}</span>
+        <span>${badge}</span>
+      </div>`;
+    }).join('');
+  } catch(e){ console.error('History load error:', e); }
+}
+
+// ==================== Status Polling ====================
+async function pollStatus(){
+  try {
+    const res = await fetch('/api/status');
+    const d = await res.json();
+    const bar = document.getElementById('statusBar');
+    if(d.protection.active){
+      bar.className = 'status-bar on';
+      bar.innerHTML = '🟢 Protection is running — USB-Sentinel is actively watching for drives';
+    } else {
+      bar.className = 'status-bar off';
+      bar.innerHTML = '🔴 Protection is not running <button class="start-btn" onclick="startProtection()">▶ Start Protection</button>';
+    }
+
+    // Legacy virus scan status display
+    const scanBox = document.getElementById('scanStatus');
+    if(d.scan && d.scan.active){
+      scanBox.style.display = 'block';
+      scanBox.innerHTML = `🔍 Scanning <b>${d.scan.drive}</b> — ${d.scan.files_scanned} files checked (${d.scan.elapsed_seconds}s elapsed)` +
+        (d.scan.current_file ? `<span class="scan-file">${d.scan.current_file}</span>` : '');
+    } else if(d.scan && d.scan.result){
+      scanBox.style.display = 'block';
+      const r = d.scan.result;
+      if(r.error){ scanBox.innerHTML = `⚠️ Last scan of <b>${d.scan.drive}</b>: ${r.error}`; }
+      else if(r.clean){ scanBox.innerHTML = `✅ Last scan of <b>${d.scan.drive}</b> complete — no threats found (${r.files_scanned} files, ${r.time_taken_seconds}s)`; }
+      else { scanBox.innerHTML = `⚠️ Last scan of <b>${d.scan.drive}</b> found ${r.infected_count} threat(s)`; }
+    } else {
+      scanBox.style.display = 'none';
+    }
+  } catch(e) {}
+}
+
+// ==================== File Search & Filter ====================
+{% if data %}
+const searchBox = document.getElementById("searchBox");
+const filterBtns = document.querySelectorAll(".controls .filter-btn");
+const fileRows = document.querySelectorAll("#fileList .file-row");
+const resultCount = document.getElementById("resultCount");
+let activeCategory = "all";
+
+function applyFilters(){
+  const query = searchBox.value.toLowerCase();
+  let visible = 0;
+  fileRows.forEach(row => {
+    const matchesCategory = activeCategory === "all" || row.dataset.category === activeCategory;
+    const matchesSearch = row.dataset.name.includes(query);
+    const show = matchesCategory && matchesSearch;
+    row.style.display = show ? "" : "none";
+    if (show) visible++;
+  });
+  resultCount.textContent = `Showing ${visible} of ${fileRows.length} files`;
+}
+searchBox.addEventListener("input", applyFilters);
+filterBtns.forEach(btn => {
+  btn.addEventListener("click", () => {
+    filterBtns.forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    activeCategory = btn.dataset.cat;
+    applyFilters();
+  });
+});
+applyFilters();
+
+// Sortable headers
+let fileSortAsc = true;
+document.querySelectorAll(".sort-head").forEach(head => {
+  head.addEventListener("click", () => {
+    const key = head.dataset.key;
+    const list = document.getElementById("fileList");
+    const items = Array.from(list.querySelectorAll(".file-row"));
+    fileSortAsc = !fileSortAsc;
+    items.sort((a, b) => {
+      let av, bv;
+      if (key === "size"){ av = +a.dataset.size; bv = +b.dataset.size; }
+      else { av = a.dataset.name; bv = b.dataset.name; }
+      if (av < bv) return fileSortAsc ? -1 : 1;
+      if (av > bv) return fileSortAsc ? 1 : -1;
+      return 0;
+    });
+    items.forEach(item => list.appendChild(item));
+  });
+});
+
+// Largest Files
+(function(){
+  const container = document.getElementById("largestList");
+  if (!container) return;
+  const rows = Array.from(container.querySelectorAll(".rank-row"));
+  const countBtns = document.querySelectorAll(".count-btn");
+  const sortBtn = document.getElementById("sortToggle");
+  let sortDesc = true;
+  let showCount = 10;
+  function render(){
+    const sorted = rows.slice().sort((a, b) => {
+      const av = +a.dataset.size, bv = +b.dataset.size;
+      return sortDesc ? bv - av : av - bv;
+    });
+    sorted.forEach((row, i) => {
+      container.appendChild(row);
+      row.querySelector(".rank-num").textContent = i + 1;
+      row.style.display = (showCount === "all" || i < showCount) ? "" : "none";
+    });
+  }
+  countBtns.forEach(btn => btn.addEventListener("click", () => {
+    countBtns.forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    showCount = btn.dataset.count === "all" ? "all" : parseInt(btn.dataset.count, 10);
+    render();
+  }));
+  sortBtn.addEventListener("click", () => {
+    sortDesc = !sortDesc;
+    sortBtn.textContent = sortDesc ? "Largest → Smallest" : "Smallest → Largest";
+    render();
+  });
+  render();
+})();
+{% endif %}
+
+// ==================== Scrollspy ====================
+const navLinks = document.querySelectorAll(".nav-link[href^='#']");
+const sections = [...navLinks].map(l => document.querySelector(l.getAttribute("href"))).filter(Boolean);
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting){
+      const id = "#" + entry.target.id;
+      navLinks.forEach(l => l.classList.toggle("active", l.getAttribute("href") === id));
+    }
+  });
+}, { rootMargin: "-20% 0px -70% 0px" });
+sections.forEach(s => observer.observe(s));
+
+// Back to top
+const backToTop = document.getElementById("backToTop");
+window.addEventListener("scroll", () => backToTop.classList.toggle("visible", window.scrollY > 400));
+backToTop.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
+
+// ==================== Init & Polling ====================
+loadLiveDrives();
+loadActivity();
+loadScanHistory();
+pollStatus();
+pollScanProgress();
+setInterval(pollStatus, 3000);
+setInterval(pollScanProgress, 2000);
+setInterval(loadLiveDrives, 5000);
+setInterval(loadActivity, 8000);
+setInterval(loadScanHistory, 10000);
 </script>
 
-
-{% endif %}
 </body>
 </html>

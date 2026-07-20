@@ -1,14 +1,28 @@
 import subprocess
 import platform
 import os
+import sys
 import time
 import json
+
+# Ensure core/ is on the import path regardless of where the script is launched from
+sys.path.insert(0, os.path.dirname(__file__))
+
 from db import set_setting
 
 CLAMSCAN_PATH_WINDOWS = r"C:\Program Files\ClamAV\clamscan.exe"
 MAX_SCAN_SECONDS = 3600
 
 def get_clamscan_path():
+    # Check if user configured a custom path
+    try:
+        from db import get_setting
+        custom_path = get_setting("clamav_path", "")
+        if custom_path and os.path.exists(custom_path):
+            return custom_path
+    except Exception:
+        pass
+
     os_name = platform.system()
     if os_name == "Windows":
         return CLAMSCAN_PATH_WINDOWS
