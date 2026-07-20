@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>USB-Sentinel — Settings</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{ --bg:#0A0E14; --panel:#121822; --panel-2:#0E141C; --border:#212B38; --ink:#E7ECF3; --muted:#7C879B; --blue:#4FA6E8; --green:#33D6A6; --amber:#F0B94D; --red:#F2645C; --radius:10px; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; background:var(--bg); color:var(--ink); font-family:'Inter',sans-serif; font-size:15px; }
+  h1,h2{ font-family:'Space Grotesk',sans-serif; margin:0; }
+  .mono{ font-family:'JetBrains Mono',monospace; }
+  a{ color:inherit; text-decoration:none; }
+  :focus-visible{ outline:2px solid var(--blue); outline-offset:2px; }
+
+  .layout{ display:flex; min-height:100vh; }
+  .sidebar{ width:230px; flex-shrink:0; background:var(--panel-2); border-right:1px solid var(--border); padding:20px 16px; }
+  .brand{ display:block; font-size:16px; font-weight:700; margin-bottom:2px; }
+  .brand span{ color:var(--blue); }
+  .brand-sub{ color:var(--muted); font-size:11px; margin-bottom:22px; }
+  .nav-link{ display:flex; align-items:center; gap:10px; padding:10px; border-radius:7px; color:var(--muted); font-size:13.5px; font-weight:500; margin-bottom:2px; }
+  .nav-link:hover{ background:var(--panel); color:var(--ink); }
+  .nav-link.active{ background:rgba(79,166,232,0.14); color:var(--blue); }
+
+  .main{ flex:1; padding:32px 40px 80px; max-width:900px; }
+  .panel{ background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); padding:24px 26px; margin-bottom:22px; }
+  .panel h2{ font-size:17px; margin-bottom:6px; }
+  .panel-sub{ color:var(--muted); font-size:12.5px; margin-bottom:18px; }
+
+  .drive-row{ display:grid; grid-template-columns:1.5fr 0.8fr 0.8fr 1.3fr 90px; gap:12px; align-items:center; padding:12px 0; border-bottom:1px solid var(--panel-2); font-size:13px; }
+  .drive-row:last-child{ border-bottom:none; }
+  .drive-head{ color:var(--muted); font-size:11px; text-transform:uppercase; letter-spacing:0.4px; border-bottom:1px solid var(--border); padding-bottom:8px; }
+  .badge{ padding:3px 9px; border-radius:6px; font-size:11px; font-weight:600; display:inline-block; }
+  .badge-trusted{ background:rgba(51,214,166,0.14); color:var(--green); }
+  .badge-blocked{ background:rgba(242,100,92,0.14); color:var(--red); }
+  .forget-btn{ background:var(--panel-2); border:1px solid var(--border); color:var(--red); padding:6px 12px; border-radius:6px; cursor:pointer; font-size:12px; font-family:inherit; }
+  .forget-btn:hover{ background:rgba(242,100,92,0.1); border-color:var(--red); }
+  .empty-note{ color:var(--muted); font-size:13px; padding:10px 0; }
+
+  .toggle-row{ display:flex; justify-content:space-between; align-items:center; padding:14px 0; border-bottom:1px solid var(--panel-2); }
+  .toggle-row:last-of-type{ border-bottom:none; }
+  .toggle-label{ font-size:14px; font-weight:500; }
+  .toggle-desc{ color:var(--muted); font-size:12px; margin-top:2px; }
+  .switch{ position:relative; width:44px; height:24px; flex-shrink:0; }
+  .switch input{ opacity:0; width:0; height:0; }
+  .slider{ position:absolute; cursor:pointer; inset:0; background:var(--border); border-radius:24px; transition:0.2s; }
+  .slider:before{ content:""; position:absolute; height:18px; width:18px; left:3px; top:3px; background:var(--ink); border-radius:50%; transition:0.2s; }
+  input:checked + .slider{ background:var(--blue); }
+  input:checked + .slider:before{ transform:translateX(20px); }
+
+  .save-btn{ background:var(--blue); color:#0A0E14; border:none; padding:10px 20px; border-radius:7px; font-weight:600; cursor:pointer; font-size:13.5px; margin-top:8px; }
+
+  @media (max-width: 800px){
+    .layout{ flex-direction:column; }
+    .sidebar{ width:100%; display:flex; gap:6px; }
+    .main{ padding:20px 16px 60px; }
+    .drive-row, .drive-head{ grid-template-columns:1fr 60px; }
+    .drive-row span:nth-child(2), .drive-row span:nth-child(3), .drive-row span:nth-child(4){ display:none; }
+  }
+  .flash-msg{ background:rgba(79,166,232,0.1); border:1px solid rgba(79,166,232,0.3); color:var(--blue); padding:10px 16px; border-radius:8px; font-size:13px; margin-bottom:20px; }
+</style>
+</head>
+<body>
+<div class="layout">
+  <nav class="sidebar">
+    <a href="/" class="brand">USB-<span>Sentinel</span></a>
+    <div class="brand-sub">Settings</div>
+    <a class="nav-link" href="/">← Dashboard</a>
+    <a class="nav-link active" href="/settings">⚙ Settings</a>
+  </nav>
+
+  <main class="main">
+
+    <div class="status-bar {{ 'on' if status.active else 'off' }}">
+      {% if status.active %}🟢 Protection is running — USB-Sentinel is actively watching for drives
+      {% else %}🔴 Protection is not running — start it with <code>python core/detector.py</code>{% endif %}
+    </div>
+
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}<div class="flash-msg">{{ messages[0] }}</div>{% endif %}
+    {% endwith %}
+
+    <section class="panel">
+      <h2>Trusted Drives</h2>
+      <div class="panel-sub">Every drive USB-Sentinel has ever seen. Forgetting a drive treats it as unknown next time.</div>
+
+      {% if drives %}
+        <div class="drive-row drive-head">
+          <span>Serial</span><span>Letter</span><span>Connected</span><span>Status</span><span></span>
+        </div>
+        {% for serial, letter, count, trusted, first_seen, last_seen in drives %}
+        <div class="drive-row">
+          <span class="mono">{{ serial }}</span>
+          <span class="mono">{{ letter }}</span>
+          <span>{{ count }}×</span>
+          <span>
+            {% if trusted == 1 %}<span class="badge badge-trusted">Trusted</span>
+            {% else %}<span class="badge badge-blocked">Not Trusted</span>{% endif %}
+          </span>
+          <form method="POST" action="/settings/forget">
+            <input type="hidden" name="serial" value="{{ serial }}">
+            <button class="forget-btn" type="submit">Forget</button>
+          </form>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty-note">No drives recorded yet.</div>
+      {% endif %}
+    </section>
+
+    <section class="panel">
+      <h2>Preferences</h2>
+      <div class="panel-sub">Control how USB-Sentinel behaves when a new drive is connected.</div>
+
+      <form method="POST" action="/settings/save">
+        <div class="toggle-row">
+          <div>
+            <div class="toggle-label">Ask to scan after allowing a drive</div>
+            <div class="toggle-desc">Show a popup offering a virus scan right after you allow a new drive</div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" name="auto_scan_prompt" {% if settings.auto_scan_prompt %}checked{% endif %}>
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="toggle-row">
+          <div>
+            <div class="toggle-label">Auto-eject blocked drives</div>
+            <div class="toggle-desc">Safely eject a drive automatically when you click Block</div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" name="eject_on_block" {% if settings.eject_on_block %}checked{% endif %}>
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <button class="save-btn" type="submit">Save Settings</button>
+      </form>
+    </section>
+  </main>
+</div>
+</body>
+</html>

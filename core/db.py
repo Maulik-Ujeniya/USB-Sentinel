@@ -21,6 +21,37 @@ def init_db():
             trusted INTEGER DEFAULT 0
         )
     """)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS settings (
+            key TEXT PRIMARY KEY,
+            value TEXT
+        )
+    """)
+    conn.commit()
+    conn.close()
+    _set_default_settings()
+
+def _set_default_settings():
+    defaults = {"auto_scan_prompt": "1", "eject_on_block": "1"}
+    for key, value in defaults.items():
+        if get_setting(key) is None:
+            set_setting(key, value)
+
+def get_setting(key, default=None):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT value FROM settings WHERE key = ?", (key,))
+    row = cursor.fetchone()
+    conn.close()
+    return row[0] if row else default
+
+def set_setting(key, value):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT INTO settings (key, value) VALUES (?, ?)
+        ON CONFLICT(key) DO UPDATE SET value = excluded.value
+    """, (key, str(value)))
     conn.commit()
     conn.close()
 
@@ -55,16 +86,10 @@ def is_trusted(serial_number):
     conn.close()
     return result is not None and result[0] == 1
 
-if __name__ == "__main__":
-    init_db()
-    print("Database created at:", DB_PATH)
-
 def set_trusted(serial_number, trusted_value):
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("""
-        UPDATE drives SET trusted = ? WHERE serial_number = ?
-    """, (trusted_value, serial_number))
+    cursor.execute("UPDATE drives SET trusted = ? WHERE serial_number = ?", (trusted_value, serial_number))
     conn.commit()
     conn.close()
 
@@ -76,9 +101,24 @@ def list_all_drives():
     conn.close()
     return rows
 
+def list_all_drives_detailed():
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT serial_number, drive_letter, connection_count, trusted, first_seen, last_seen
+        FROM drives ORDER BY last_seen DESC
+    """)
+    rows = cursor.fetchall()
+    conn.close()
+    return rows
+
 def forget_drive(serial_number):
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("DELETE FROM drives WHERE serial_number = ?", (serial_number,))
     conn.commit()
     conn.close()
+
+if __name__ == "__main__":
+    init_db()
+    print("Database created at:", DB_PATH)

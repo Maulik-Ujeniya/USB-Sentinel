@@ -2,11 +2,12 @@ import psutil
 import time
 import sys
 import os
+from datetime import datetime
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "gui"))
 
 from identifier import get_drive_serial, eject_drive
-from db import init_db, record_drive_connection, is_trusted, set_trusted
+from db import init_db, record_drive_connection, is_trusted, set_trusted, get_setting, set_setting
 from popup import ask_allow_or_block, ask_scan_now, show_scan_result
 from scanner import scan_drive_for_viruses
 
@@ -19,7 +20,6 @@ def get_connected_drives():
 
 def handle_new_drive(drive_letter, serial):
     already_known = is_trusted(serial)
-
     record_drive_connection(serial, drive_letter)
 
     if already_known:
@@ -33,19 +33,25 @@ def handle_new_drive(drive_letter, serial):
         set_trusted(serial, 1)
         print(f"    User ALLOWED this drive. Marked as trusted.")
 
-        wants_scan = ask_scan_now(drive_letter)
-        if wants_scan:
-            print(f"    Scanning {drive_letter} for viruses...")
-            scan_result = scan_drive_for_viruses(drive_letter)
-            show_scan_result(scan_result)
-            print(f"    Scan finished.")
+        if get_setting("auto_scan_prompt", "1") == "1":
+            wants_scan = ask_scan_now(drive_letter)
+            if wants_scan:
+                print(f"    Scanning {drive_letter} for viruses...")
+                scan_result = scan_drive_for_viruses(drive_letter)
+                show_scan_result(scan_result)
+                print(f"    Scan finished.")
+            else:
+                print(f"    User skipped scanning.")
         else:
-            print(f"    User skipped scanning.")
+            print(f"    Scan prompt disabled in Settings.")
     else:
         set_trusted(serial, 0)
-        print(f"    User BLOCKED this drive. Ejecting...")
-        eject_drive(drive_letter)
-        print(f"    Drive ejected.")
+        if get_setting("eject_on_block", "1") == "1":
+            print(f"    User BLOCKED this drive. Ejecting...")
+            eject_drive(drive_letter)
+            print(f"    Drive ejected.")
+        else:
+            print(f"    User BLOCKED this drive. (Auto-eject disabled in Settings)")
 
 def start_watching():
     init_db()
@@ -53,9 +59,9 @@ def start_watching():
     old_drives = get_connected_drives()
 
     while True:
+        set_setting("last_heartbeat", datetime.now().isoformat())
         time.sleep(2)
         new_drives = get_connected_drives()
-
         added = new_drives - old_drives
         removed = old_drives - new_drives
 

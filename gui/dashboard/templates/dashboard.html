@@ -171,7 +171,14 @@
     .dup-file, .change-item{ grid-template-columns:50px 1fr 70px; }
     .dup-folder, .ci-folder{ display:none; }
   }
+    .status-bar{ display:flex; align-items:center; gap:8px; padding:10px 16px; border-radius:8px; font-size:13px; margin-bottom:20px; border:1px solid var(--border); }
+    .status-bar.on{ background:rgba(51,214,166,0.08); border-color:rgba(51,214,166,0.3); color:var(--green); }
+    .status-bar.off{ background:rgba(242,100,92,0.08); border-color:rgba(242,100,92,0.3); color:var(--red); }
+    .status-bar code{ background:var(--panel-2); padding:2px 7px; border-radius:5px; color:var(--ink); }
+    .scan-status{ background:rgba(79,166,232,0.08); border:1px solid rgba(79,166,232,0.3); color:var(--blue); padding:10px 16px; border-radius:8px; font-size:13px; margin-bottom:20px; }
+    .scan-status .scan-file{ display:block; font-family:'JetBrains Mono',monospace; font-size:11.5px; color:var(--muted); margin-top:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 </style>
+
 </head>
 <body>
 
@@ -198,6 +205,7 @@
     <a class="nav-link" href="#duplicates"><span class="nav-icon">⧉</span>Duplicates</a>
     <a class="nav-link" href="#largest"><span class="nav-icon">📶</span>Largest Files</a>
     <a class="nav-link" href="#changes"><span class="nav-icon">↺</span>Changes</a>
+    <a class="nav-link" href="/settings"><span class="nav-icon">⚙</span>Settings</a>
 
     <div class="sidebar-info">
       <div class="label">Drive / Folder</div>
@@ -208,6 +216,15 @@
   </nav>
 
   <main class="main">
+    <main class="main">
+
+    <div class="status-bar {{ 'on' if status.active else 'off' }}" id="statusBar">
+      {% if status.active %}🟢 Protection is running — USB-Sentinel is actively watching for drives
+      {% else %}🔴 Protection is not running — start it with <code>python core/detector.py</code>{% endif %}
+    </div>
+    <div class="scan-status" id="scanStatus" style="display:none;"></div>
+
+    <section id="overview" class="panel">
 
     <section id="overview" class="panel">
       <div class="hero">
@@ -513,7 +530,38 @@
   const backToTop = document.getElementById("backToTop");
   window.addEventListener("scroll", () => backToTop.classList.toggle("visible", window.scrollY > 400));
   backToTop.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
+  async function pollStatus(){
+    try {
+      const res = await fetch('/api/status');
+      const d = await res.json();
+      const bar = document.getElementById('statusBar');
+      if (d.protection.active){
+        bar.className = 'status-bar on';
+        bar.innerHTML = '🟢 Protection is running — USB-Sentinel is actively watching for drives';
+      } else {
+        bar.className = 'status-bar off';
+        bar.innerHTML = '🔴 Protection is not running — start it with <code>python core/detector.py</code>';
+      }
+      const scanBox = document.getElementById('scanStatus');
+      if (d.scan && d.scan.active){
+        scanBox.style.display = 'block';
+        scanBox.innerHTML = `🔍 Scanning <b>${d.scan.drive}</b> — ${d.scan.files_scanned} files checked (${d.scan.elapsed_seconds}s elapsed)` +
+          (d.scan.current_file ? `<span class="scan-file">${d.scan.current_file}</span>` : '');
+      } else if (d.scan && d.scan.result){
+        scanBox.style.display = 'block';
+        const r = d.scan.result;
+        if (r.error){ scanBox.innerHTML = `⚠️ Last scan of <b>${d.scan.drive}</b>: ${r.error}`; }
+        else if (r.clean){ scanBox.innerHTML = `✅ Last scan of <b>${d.scan.drive}</b> complete — no threats found (${r.files_scanned} files, ${r.time_taken_seconds}s)`; }
+        else { scanBox.innerHTML = `⚠️ Last scan of <b>${d.scan.drive}</b> found ${r.infected_count} threat(s)`; }
+      } else {
+        scanBox.style.display = 'none';
+      }
+    } catch(e) {}
+  }
+  pollStatus();
+  setInterval(pollStatus, 2000);
 </script>
+
 
 {% endif %}
 </body>
