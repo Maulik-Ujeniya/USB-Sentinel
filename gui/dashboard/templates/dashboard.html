@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>USB-Sentinel — Inspection Report</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0A0E14; --panel:#121822; --panel-2:#0E141C; --border:#212B38;
+    --ink:#E7ECF3; --muted:#7C879B;
+    --blue:#4FA6E8; --green:#33D6A6; --amber:#F0B94D; --red:#F2645C;
+    --radius:10px;
+  }
+  @media (prefers-reduced-motion: reduce){ *{ animation:none !important; transition:none !important; } }
+  *{ box-sizing:border-box; }
+  html{ scroll-behavior:smooth; }
+  body{ margin:0; background:var(--bg); color:var(--ink); font-family:'Inter',sans-serif; font-size:15px; line-height:1.55; }
+  h1,h2,h3{ font-family:'Space Grotesk',sans-serif; margin:0; }
+  code, .mono{ font-family:'JetBrains Mono',monospace; }
+  a{ color:inherit; text-decoration:none; }
+  button{ font-family:inherit; }
+  :focus-visible{ outline:2px solid var(--blue); outline-offset:2px; }
+
+  .layout{ display:flex; min-height:100vh; }
+
+  .sidebar{ width:230px; flex-shrink:0; background:var(--panel-2); border-right:1px solid var(--border); padding:20px 16px; position:sticky; top:0; height:100vh; overflow-y:auto; }
+  .brand{ display:block; font-size:16px; font-weight:700; letter-spacing:0.3px; margin-bottom:2px; }
+  .brand span{ color:var(--blue); }
+  .brand-sub{ color:var(--muted); font-size:11px; margin-bottom:22px; }
+  .nav-link{ display:flex; align-items:center; gap:10px; padding:10px 10px; border-radius:7px; color:var(--muted); font-size:13.5px; font-weight:500; margin-bottom:2px; }
+  .nav-link:hover{ background:var(--panel); color:var(--ink); }
+  .nav-link.active{ background:rgba(79,166,232,0.14); color:var(--blue); }
+  .nav-icon{ font-size:14px; width:16px; text-align:center; }
+
+  .sidebar-info{ margin-top:22px; padding-top:16px; border-top:1px solid var(--border); }
+  .sidebar-info .label{ color:var(--muted); font-size:10px; text-transform:uppercase; letter-spacing:0.6px; margin-bottom:3px; }
+  .sidebar-info .val{ font-size:12px; word-break:break-all; margin-bottom:12px; }
+
+  .main{ flex:1; padding:32px 40px 100px; max-width:1150px; }
+  .panel{ background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); padding:24px 26px; margin-bottom:22px; scroll-margin-top:20px; }
+  .panel h2{ font-size:18px; margin-bottom:16px; display:flex; align-items:center; gap:8px; }
+  .panel-sub{ color:var(--muted); font-size:12.5px; margin-top:-14px; margin-bottom:16px; }
+  .count-sub{ color:var(--muted); font-weight:400; font-size:12.5px; }
+
+  /* HERO */
+  .hero{ display:flex; gap:32px; align-items:center; flex-wrap:wrap; }
+  .stamp{ width:120px; height:120px; border-radius:50%; flex-shrink:0;
+    background:conic-gradient(var(--ring-color,var(--blue)) calc(max(var(--pct,0),3)*3.6deg), var(--border) 0deg);
+    -webkit-mask:radial-gradient(farthest-side, transparent calc(100% - 12px), #000 calc(100% - 12px));
+    mask:radial-gradient(farthest-side, transparent calc(100% - 12px), #000 calc(100% - 12px));
+    display:flex; align-items:center; justify-content:center; }
+  .stamp-inner{ width:96px; height:96px; border-radius:50%; background:var(--panel); display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; }
+  .stamp-inner .pct{ font-family:'Space Grotesk'; font-size:26px; font-weight:700; }
+  .stamp-inner .txt{ font-size:9px; letter-spacing:0.6px; color:var(--muted); margin-top:2px; text-transform:uppercase; }
+  .hero-stats{ display:flex; gap:30px; flex-wrap:wrap; flex:1; }
+  .stat .num{ font-family:'Space Grotesk'; font-size:30px; font-weight:600; }
+  .stat .lbl{ color:var(--muted); font-size:12px; margin-top:3px; }
+  .stat .num.amber{ color:var(--amber); }
+
+  .capacity-bar{ height:11px; border-radius:6px; background:var(--border); overflow:hidden; margin:20px 0 8px; }
+  .capacity-fill{ height:100%; border-radius:6px; }
+  .capacity-caption{ display:flex; justify-content:space-between; font-size:12.5px; color:var(--muted); }
+  .capacity-caption b{ color:var(--ink); font-weight:500; }
+
+  /* CATEGORY BAR */
+  .catbar{ display:flex; height:36px; border-radius:6px; overflow:hidden; border:1px solid var(--border); margin-bottom:18px; }
+  .catbar .seg{ flex-basis:0; min-width:14px; display:flex; align-items:center; justify-content:center; overflow:hidden; }
+  .seg-label{ font-size:11px; font-weight:600; color:#0A0E14; background:rgba(255,255,255,0.8); padding:2px 7px; border-radius:4px; white-space:nowrap; }
+  .legend{ display:grid; grid-template-columns:repeat(auto-fill, minmax(170px,1fr)); gap:10px; }
+  .legend-item{ display:flex; align-items:center; gap:8px; font-size:13px; background:var(--panel-2); border:1px solid var(--border); border-radius:7px; padding:9px 12px; }
+  .legend-dot{ width:10px; height:10px; border-radius:3px; flex-shrink:0; }
+  .legend-item .n{ color:var(--muted); font-size:11.5px; display:block; }
+
+  .chip[data-cat="Image"]{ --c:#5EC2E8; } .chip[data-cat="Video"]{ --c:#8A7FF0; }
+  .chip[data-cat="Audio"]{ --c:#4FD1C5; } .chip[data-cat="Document"]{ --c:#6FA8DC; }
+  .chip[data-cat="PDF"]{ --c:#E88B9E; } .chip[data-cat="Spreadsheet"]{ --c:#6FCF97; }
+  .chip[data-cat="Presentation"]{ --c:#C9A45C; } .chip[data-cat="Code"]{ --c:#B4D66B; }
+  .chip[data-cat="Archive"]{ --c:#B98CE0; } .chip[data-cat="Executable"]{ --c:#E0785A; }
+  .chip[data-cat="Other"]{ --c:#7C879B; }
+  .seg, .legend-dot{ background:var(--c,#7C879B); }
+  .seg{ flex-grow:var(--grow,1); }
+
+  /* CHANGES */
+  .change-group{ border:1px solid var(--border); border-radius:8px; margin-bottom:8px; overflow:hidden; }
+  .change-group summary{ list-style:none; cursor:pointer; padding:12px 14px; background:var(--panel-2); font-size:13.5px; font-weight:500; }
+  .change-group summary::-webkit-details-marker{ display:none; }
+  .change-group summary .chev{ color:var(--muted); font-size:11px; margin-right:6px; transition:transform 0.15s; }
+  .change-group[open] summary .chev{ transform:rotate(90deg); }
+  .change-group summary.add{ color:var(--green); } .change-group summary.rem{ color:var(--red); } .change-group summary.mod{ color:var(--amber); }
+  .change-item{ display:grid; grid-template-columns:20px 1.4fr 1.6fr 1fr; gap:10px; padding:8px 14px; font-size:12.5px; align-items:center; border-top:1px solid var(--panel-2); }
+  .ci-folder{ color:var(--muted); font-size:11px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .ci-size{ text-align:right; font-family:'JetBrains Mono'; font-size:11.5px; }
+  .empty-note{ color:var(--muted); font-size:13px; padding:10px 0; }
+
+  /* DUPLICATES */
+  .dupgroup{ border:1px solid var(--border); border-radius:8px; margin-bottom:10px; overflow:hidden; }
+  .dupgroup summary{ list-style:none; cursor:pointer; padding:13px 15px; display:flex; justify-content:space-between; align-items:center; background:var(--panel-2); font-size:13.5px; }
+  .dupgroup summary::-webkit-details-marker{ display:none; }
+  .dupgroup summary .chev{ color:var(--muted); font-size:11px; margin-right:6px; transition:transform 0.15s; }
+  .dupgroup[open] summary .chev{ transform:rotate(90deg); }
+  .dupgroup .waste{ color:var(--amber); font-weight:500; }
+  .dup-body{ padding:8px 15px 14px; }
+  .dup-file{ display:grid; grid-template-columns:66px 1.6fr 1.6fr 0.8fr; gap:10px; align-items:center; padding:7px 0; font-size:12.5px; border-bottom:1px solid var(--panel-2); }
+  .dup-file:last-child{ border-bottom:none; }
+  .tag{ font-size:9.5px; font-weight:700; padding:3px 6px; border-radius:4px; text-align:center; letter-spacing:0.3px; }
+  .tag-orig{ background:rgba(51,214,166,0.15); color:var(--green); } .tag-copy{ background:rgba(240,185,77,0.15); color:var(--amber); }
+  .dup-folder{ color:var(--muted); font-size:11px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+  /* LARGEST FILES */
+  .controls-row{ display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:16px; }
+  .btn-group{ display:flex; gap:6px; }
+  .count-btn, .filter-btn{ background:var(--panel-2); border:1px solid var(--border); color:var(--muted); padding:7px 13px; border-radius:7px; cursor:pointer; font-size:12.5px; }
+  .count-btn:hover, .filter-btn:hover{ color:var(--ink); }
+  .count-btn.active{ background:rgba(79,166,232,0.14); border-color:var(--blue); color:var(--blue); }
+  .rank-row{ display:grid; grid-template-columns:24px 1fr 100px; gap:12px; align-items:center; padding:10px 0; border-bottom:1px solid var(--border); }
+  .rank-row:last-child{ border-bottom:none; }
+  .rank-num{ color:var(--muted); font-size:12.5px; }
+  .rank-path{ font-family:'JetBrains Mono'; font-size:12.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .rank-folder{ font-size:10.5px; color:var(--muted); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .rank-bar-bg{ height:4px; background:var(--border); border-radius:2px; margin-top:6px; }
+  .rank-bar{ height:100%; background:var(--blue); border-radius:2px; }
+  .rank-size{ font-family:'JetBrains Mono'; font-size:12.5px; color:var(--ink); text-align:right; }
+
+  /* FILE TABLE */
+  .controls{ position:sticky; top:0; background:var(--panel); z-index:5; padding-bottom:14px; display:flex; gap:8px; flex-wrap:wrap; }
+  #searchBox{ background:var(--panel-2); border:1px solid var(--border); color:var(--ink); padding:9px 13px; border-radius:7px; width:250px; font-size:13.5px; font-family:inherit; }
+  .filter-btn.active{ background:rgba(79,166,232,0.14); border-color:var(--blue); color:var(--blue); }
+  .result-count{ color:var(--muted); font-size:12px; margin-bottom:10px; }
+
+  .file-head, details.file-row summary{ display:grid; grid-template-columns:20px 2.1fr 1fr 0.7fr 0.85fr 1.5fr; gap:10px; align-items:center; padding:10px 6px; }
+  .file-head{ color:var(--muted); font-size:11px; text-transform:uppercase; letter-spacing:0.4px; border-bottom:1px solid var(--border); }
+  .sort-head{ background:none; border:none; color:inherit; font:inherit; text-transform:inherit; letter-spacing:inherit; cursor:pointer; display:flex; align-items:center; gap:4px; padding:0; }
+  .sort-head .arrow{ font-size:9px; }
+  details.file-row{ padding:0; display:block; border-bottom:1px solid var(--panel-2); }
+  details.file-row summary{ list-style:none; cursor:pointer; }
+  details.file-row summary::-webkit-details-marker{ display:none; }
+  details.file-row.no-detail summary{ cursor:default; }
+  details.file-row.no-detail .chev{ visibility:hidden; }
+  .file-row:hover summary{ background:var(--panel-2); }
+  .chev{ color:var(--muted); font-size:10px; transition:transform 0.15s; }
+  details[open] .chev{ transform:rotate(90deg); }
+  .f-name{ display:flex; align-items:center; gap:8px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .f-cat{ display:flex; align-items:center; gap:6px; font-size:12.5px; }
+  .f-dot{ width:8px; height:8px; border-radius:2px; }
+  .f-ext, .f-size{ font-family:'JetBrains Mono'; font-size:12.5px; color:var(--muted); }
+  .f-folder{ font-family:'JetBrains Mono'; font-size:11.5px; color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .f-detail{ padding:4px 6px 16px 40px; font-size:12.5px; color:var(--muted); }
+  .f-detail .row{ margin-bottom:4px; }
+  .f-detail .sig-yes{ color:var(--green); } .f-detail .sig-no{ color:var(--amber); }
+
+  .empty-state{ text-align:center; padding:80px 20px; color:var(--muted); }
+  .empty-state h2{ color:var(--ink); margin-bottom:8px; }
+  .empty-state code{ background:var(--panel); padding:2px 8px; border-radius:5px; }
+
+  .back-to-top{ position:fixed; bottom:24px; right:24px; width:44px; height:44px; border-radius:50%;
+    background:var(--blue); color:#0A0E14; border:none; font-size:18px; cursor:pointer;
+    opacity:0; pointer-events:none; transition:opacity 0.2s, transform 0.2s; transform:translateY(10px); }
+  .back-to-top.visible{ opacity:1; pointer-events:auto; transform:translateY(0); }
+
+  @media (max-width: 860px){
+    .layout{ flex-direction:column; }
+    .sidebar{ position:static; width:100%; height:auto; display:flex; align-items:center; gap:2px; overflow-x:auto; padding:14px 16px; }
+    .sidebar-info{ display:none; }
+    .brand, .brand-sub{ display:none; }
+    .main{ padding:20px 16px 60px; }
+    .file-head{ display:none; }
+    details.file-row summary{ grid-template-columns:16px 1fr 70px; }
+    .f-cat span.txt, .f-folder{ display:none; }
+    .dup-file, .change-item{ grid-template-columns:50px 1fr 70px; }
+    .dup-folder, .ci-folder{ display:none; }
+  }
+</style>
+</head>
+<body>
+
+{% if not data %}
+  <div class="empty-state">
+    <h2>No scan data yet</h2>
+    <p>Run <code>python core/analyzer.py</code>, scan a drive, then refresh this page.</p>
+  </div>
+{% else %}
+
+{% set total = data.total_size | default(0) %}
+{% set wasted = data.wasted_bytes | default(0) %}
+{% set du = data.disk_usage %}
+{% set pct_used = du.percent_used if du else 0 %}
+{% set ring_color = 'var(--red)' if pct_used > 90 else ('var(--amber)' if pct_used > 70 else 'var(--blue)') %}
+
+<div class="layout">
+  <nav class="sidebar">
+    <a href="#overview" class="brand">USB-<span>Sentinel</span></a>
+    <div class="brand-sub">Inspection Report</div>
+
+    <a class="nav-link" href="#overview"><span class="nav-icon">▣</span>Overview</a>
+    <a class="nav-link" href="#files"><span class="nav-icon">🗂</span>All Files</a>
+    <a class="nav-link" href="#duplicates"><span class="nav-icon">⧉</span>Duplicates</a>
+    <a class="nav-link" href="#largest"><span class="nav-icon">📶</span>Largest Files</a>
+    <a class="nav-link" href="#changes"><span class="nav-icon">↺</span>Changes</a>
+
+    <div class="sidebar-info">
+      <div class="label">Drive / Folder</div>
+      <div class="val mono">{{ data.drive_path }}</div>
+      <div class="label">Scanned</div>
+      <div class="val mono">{{ data.scan_date[:19] }}</div>
+    </div>
+  </nav>
+
+  <main class="main">
+
+    <section id="overview" class="panel">
+      <div class="hero">
+        <div class="stamp" style="--pct:{{ pct_used }}; --ring-color:{{ ring_color }};">
+          <div class="stamp-inner">
+            <div class="pct">{{ pct_used }}%</div>
+            <div class="txt">Drive Used</div>
+          </div>
+        </div>
+        <div class="hero-stats">
+          <div class="stat"><div class="num">{{ data.total_files }}</div><div class="lbl">Total Files</div></div>
+          <div class="stat"><div class="num">{{ data.total_size_readable }}</div><div class="lbl">Scanned Size</div></div>
+          <div class="stat"><div class="num">{{ du.free_readable if du else '—' }}</div><div class="lbl">Free Space</div></div>
+          <div class="stat"><div class="num {% if data.duplicate_copies > 0 %}amber{% endif %}">{{ data.duplicate_copies }}</div><div class="lbl">Duplicate copies · {{ data.wasted_space_readable }} wasted</div></div>
+          <div class="stat"><div class="num">{{ data.total_folders_scanned }}</div><div class="lbl">Folders</div></div>
+        </div>
+      </div>
+      {% if du %}
+      <div class="capacity-bar"><div class="capacity-fill" style="width:{{ du.percent_used }}%; background:{{ ring_color }};"></div></div>
+      <div class="capacity-caption">
+        <span><b>{{ du.used_readable }}</b> used</span>
+        <span><b>{{ du.free_readable }}</b> free</span>
+        <span><b>{{ du.total_readable }}</b> total capacity</span>
+      </div>
+      {% endif %}
+    </section>
+
+    <section id="files" class="panel">
+      <h2>🗂 All Files</h2>
+      <div class="controls">
+        <input type="text" id="searchBox" placeholder="Search by filename or extension...">
+        <button class="filter-btn active" data-cat="all">All</button>
+        {% for cat in data.category_summary.keys() %}
+        <button class="filter-btn" data-cat="{{ cat }}">{{ cat }}</button>
+        {% endfor %}
+      </div>
+      <div class="result-count" id="resultCount"></div>
+
+      <div class="file-head">
+        <span></span>
+        <button class="sort-head" data-key="name">Name<span class="arrow"></span></button>
+        <span>Category</span><span>Ext</span>
+        <button class="sort-head" data-key="size">Size<span class="arrow"></span></button>
+        <span>Folder</span>
+      </div>
+
+      <div id="fileList">
+        {% for folder in data.folders %}
+          {% for file in folder.files %}
+            {% set has_detail = file.zip_preview or file.exe_metadata %}
+            <details class="file-row {{ '' if has_detail else 'no-detail' }}" data-category="{{ file.category }}" data-name="{{ file.name|lower }} {{ file.extension|lower }}" data-size="{{ file.size_bytes }}">
+              <summary>
+                <span class="chev">▸</span>
+                <span class="f-name">{{ file.icon }} {{ file.name }}</span>
+                <span class="f-cat chip" data-cat="{{ file.category }}"><span class="f-dot"></span><span class="txt">{{ file.category }}</span></span>
+                <span class="f-ext">{{ file.extension }}</span>
+                <span class="f-size">{{ file.size_readable }}</span>
+                <span class="f-folder">{{ folder.path }}</span>
+              </summary>
+              {% if has_detail %}
+              <div class="f-detail">
+                {% if file.zip_preview %}
+                  {% if file.zip_preview.entries is defined %}
+                    <div class="row">📦 Contains {{ file.zip_preview.total_entries }} item(s){% if file.zip_preview.total_entries > file.zip_preview.shown_entries %} (showing first {{ file.zip_preview.shown_entries }}){% endif %}:</div>
+                    {% for entry in file.zip_preview.entries %}<div class="row mono">&nbsp;&nbsp;- {{ entry.name }} ({{ entry.size_readable }})</div>{% endfor %}
+                  {% else %}
+                    <div class="row">⚠️ {{ file.zip_preview.error }}</div>
+                  {% endif %}
+                {% endif %}
+                {% if file.exe_metadata %}
+                  {% if file.exe_metadata.publisher is defined %}
+                    <div class="row">⚙️ Publisher: {{ file.exe_metadata.publisher }}</div>
+                    <div class="row">Product: {{ file.exe_metadata.product_name }} · Version: {{ file.exe_metadata.version }}</div>
+                    <div class="row">Digitally signed: <span class="{{ 'sig-yes' if file.exe_metadata.digitally_signed else 'sig-no' }}">{{ 'Yes' if file.exe_metadata.digitally_signed else 'Not verified' }}</span></div>
+                  {% else %}
+                    <div class="row">⚠️ {{ file.exe_metadata.error }}</div>
+                  {% endif %}
+                {% endif %}
+              </div>
+              {% endif %}
+            </details>
+          {% endfor %}
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Storage Breakdown</h2>
+      <div class="catbar">
+        {% for cat, info in data.category_summary.items() %}
+          {% set pct = ((info.total_size / total * 100) if total else 0) %}
+          <div class="seg chip" data-cat="{{ cat }}" style="--grow:{{ pct if pct > 0 else 0.2 }};" title="{{ cat }}: {{ info.count }} files · {{ info.total_size_readable }} ({{ pct | round(1) }}%)">
+            {% if pct > 9 %}<span class="seg-label">{{ cat }}</span>{% endif %}
+          </div>
+        {% endfor %}
+      </div>
+      <div class="legend">
+        {% for cat, info in data.category_summary.items() %}
+        <div class="legend-item chip" data-cat="{{ cat }}">
+          <span class="legend-dot"></span>
+          <span>{{ cat }}<span class="n">{{ info.count }} files · {{ info.total_size_readable }}</span></span>
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section id="duplicates" class="panel">
+      <h2>⧉ Duplicate Files <span class="count-sub">({{ data.duplicates|length }} groups)</span></h2>
+      {% if data.duplicates %}
+        {% for dup in data.duplicates %}
+        <details class="dupgroup">
+          <summary>
+            <span><span class="chev">▸</span>{{ dup.count }}× copies · {{ dup.size_each_readable }} each</span>
+            <span class="waste">wasting {{ dup.wasted_space_readable }}</span>
+          </summary>
+          <div class="dup-body">
+            <div class="dup-file">
+              <span class="tag tag-orig">ORIGINAL</span>
+              <span>{{ dup.original.icon }} {{ dup.original.name }}</span>
+              <span class="dup-folder mono">{{ dup.original.folder }}</span>
+              <span class="mono">{{ dup.original.size_readable }}</span>
+            </div>
+            {% for c in dup.copies %}
+            <div class="dup-file">
+              <span class="tag tag-copy">COPY</span>
+              <span>{{ c.icon }} {{ c.name }}</span>
+              <span class="dup-folder mono">{{ c.folder }}</span>
+              <span class="mono">{{ c.size_readable }}</span>
+            </div>
+            {% endfor %}
+          </div>
+        </details>
+        {% endfor %}
+      {% else %}
+        <div class="empty-note">No duplicate files found — every file on this drive is unique.</div>
+      {% endif %}
+    </section>
+
+    <section id="largest" class="panel">
+      <h2>📶 Largest Files</h2>
+      <div class="controls-row">
+        <div class="btn-group">
+          <button class="count-btn active" data-count="10">Top 10</button>
+          <button class="count-btn" data-count="25">Top 25</button>
+          <button class="count-btn" data-count="50">Top 50</button>
+          <button class="count-btn" data-count="all">All</button>
+        </div>
+        <button class="filter-btn" id="sortToggle">Largest → Smallest</button>
+      </div>
+      {% if data.largest_files %}
+        {% set max_size = data.largest_files[0].size_bytes %}
+        <div id="largestList">
+          {% for f in data.largest_files %}
+          <div class="rank-row" data-size="{{ f.size_bytes }}">
+            <div class="rank-num">{{ loop.index }}</div>
+            <div>
+              <div class="rank-path">{{ f.icon }} {{ f.name }}</div>
+              <div class="rank-folder">{{ f.folder }}</div>
+              <div class="rank-bar-bg"><div class="rank-bar" style="width:{{ (f.size_bytes / max_size * 100) if max_size else 0 }}%;"></div></div>
+            </div>
+            <div class="rank-size">{{ f.size_readable }}</div>
+          </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-note">No files found.</div>
+      {% endif %}
+    </section>
+
+    <section id="changes" class="panel">
+      <h2>↺ Changes Since Last Scan</h2>
+      {% if data.changes %}
+        <div class="panel-sub">Compared to scan on {{ data.changes.previous_scan_date[:19] }}</div>
+        {% set groups = [('added','Added','add','+'), ('modified','Modified','mod','~'), ('removed','Removed','rem','−')] %}
+        {% for key, label, cls, sign in groups %}
+          {% set items = data.changes[key] %}
+          <details class="change-group">
+            <summary class="{{ cls }}"><span class="chev">▸</span>{{ sign }} {{ items|length }} {{ label }}</summary>
+            {% if items %}
+              {% for it in items %}
+              <div class="change-item">
+                <span>{{ it.icon }}</span>
+                <span>{{ it.name }}</span>
+                <span class="ci-folder">{{ it.folder }}</span>
+                <span class="ci-size">{% if key == 'modified' %}{{ it.old_size_readable }} → {{ it.new_size_readable }}{% else %}{{ it.size_readable }}{% endif %}</span>
+              </div>
+              {% endfor %}
+            {% else %}
+              <div class="empty-note" style="padding:10px 15px;">No files {{ label|lower }}.</div>
+            {% endif %}
+          </details>
+        {% endfor %}
+      {% else %}
+        <div class="empty-note">This is the first scan of this drive/folder — rescan it later to see what changed.</div>
+      {% endif %}
+    </section>
+
+  </main>
+</div>
+
+<button class="back-to-top" id="backToTop" aria-label="Back to top">↑</button>
+
+<script>
+  // Search + category filter
+  const searchBox = document.getElementById("searchBox");
+  const filterBtns = document.querySelectorAll(".controls .filter-btn");
+  const fileRows = document.querySelectorAll("#fileList .file-row");
+  const resultCount = document.getElementById("resultCount");
+  let activeCategory = "all";
+
+  function applyFilters(){
+    const query = searchBox.value.toLowerCase();
+    let visible = 0;
+    fileRows.forEach(row => {
+      const matchesCategory = activeCategory === "all" || row.dataset.category === activeCategory;
+      const matchesSearch = row.dataset.name.includes(query);
+      const show = matchesCategory && matchesSearch;
+      row.style.display = show ? "" : "none";
+      if (show) visible++;
+    });
+    resultCount.textContent = `Showing ${visible} of ${fileRows.length} files`;
+  }
+  searchBox.addEventListener("input", applyFilters);
+  filterBtns.forEach(btn => {
+    btn.addEventListener("click", () => {
+      filterBtns.forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      activeCategory = btn.dataset.cat;
+      applyFilters();
+    });
+  });
+  applyFilters();
+
+  // Sortable All Files headers
+  let fileSortAsc = true;
+  document.querySelectorAll(".sort-head").forEach(head => {
+    head.addEventListener("click", () => {
+      const key = head.dataset.key;
+      const list = document.getElementById("fileList");
+      const items = Array.from(list.querySelectorAll(".file-row"));
+      fileSortAsc = !fileSortAsc;
+      items.sort((a, b) => {
+        let av, bv;
+        if (key === "size"){ av = +a.dataset.size; bv = +b.dataset.size; }
+        else { av = a.dataset.name; bv = b.dataset.name; }
+        if (av < bv) return fileSortAsc ? -1 : 1;
+        if (av > bv) return fileSortAsc ? 1 : -1;
+        return 0;
+      });
+      items.forEach(item => list.appendChild(item));
+    });
+  });
+
+  // Largest Files: count + sort controls
+  (function(){
+    const container = document.getElementById("largestList");
+    if (!container) return;
+    const rows = Array.from(container.querySelectorAll(".rank-row"));
+    const countBtns = document.querySelectorAll(".count-btn");
+    const sortBtn = document.getElementById("sortToggle");
+    let sortDesc = true;
+    let showCount = 10;
+
+    function render(){
+      const sorted = rows.slice().sort((a, b) => {
+        const av = +a.dataset.size, bv = +b.dataset.size;
+        return sortDesc ? bv - av : av - bv;
+      });
+      sorted.forEach((row, i) => {
+        container.appendChild(row);
+        row.querySelector(".rank-num").textContent = i + 1;
+        row.style.display = (showCount === "all" || i < showCount) ? "" : "none";
+      });
+    }
+    countBtns.forEach(btn => btn.addEventListener("click", () => {
+      countBtns.forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      showCount = btn.dataset.count === "all" ? "all" : parseInt(btn.dataset.count, 10);
+      render();
+    }));
+    sortBtn.addEventListener("click", () => {
+      sortDesc = !sortDesc;
+      sortBtn.textContent = sortDesc ? "Largest → Smallest" : "Smallest → Largest";
+      render();
+    });
+    render();
+  })();
+
+  // Sidebar scrollspy
+  const navLinks = document.querySelectorAll(".nav-link");
+  const sections = [...navLinks].map(l => document.querySelector(l.getAttribute("href"))).filter(Boolean);
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting){
+        const id = "#" + entry.target.id;
+        navLinks.forEach(l => l.classList.toggle("active", l.getAttribute("href") === id));
+      }
+    });
+  }, { rootMargin: "-20% 0px -70% 0px" });
+  sections.forEach(s => observer.observe(s));
+
+  // Back to top
+  const backToTop = document.getElementById("backToTop");
+  window.addEventListener("scroll", () => backToTop.classList.toggle("visible", window.scrollY > 400));
+  backToTop.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
+</script>
+
+{% endif %}
+</body>
+</html>
