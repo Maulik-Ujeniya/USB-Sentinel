@@ -202,11 +202,12 @@ def api_scan_drive():
 
     def run_scan():
         try:
-            def progress_cb(files, folders, current):
+            def progress_cb(files, folders, current_file, current_folder):
                 with _scans_lock:
                     _active_scans[scan_key]["files_scanned"] = files
                     _active_scans[scan_key]["folders_scanned"] = folders
-                    _active_scans[scan_key]["current_folder"] = current
+                    _active_scans[scan_key]["current_file"] = current_file
+                    _active_scans[scan_key]["current_folder"] = current_folder
 
             set_scan_progress_callback(progress_cb)
             scan_data = scan_drive_full(drive_path)

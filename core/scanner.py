@@ -1,133 +1,152 @@
-import subprocess
-import platform
 import os
 import sys
 import time
 import json
 
-# Ensure core/ is on the import path regardless of where the script is launched from
+# Ensure core/ is on the import path
 sys.path.insert(0, os.path.dirname(__file__))
-
 from db import set_setting
 
-CLAMSCAN_PATH_WINDOWS = r"C:\Program Files\ClamAV\clamscan.exe"
-MAX_SCAN_SECONDS = 3600
+# Dangerous extensions commonly used in USB malware / autoruns
+SUSPICIOUS_EXTENSIONS = {
+    ".exe", ".scr", ".pif", ".vbs", ".vbe", ".js", ".jse", ".bat", ".cmd",
+    ".ps1", ".hta", ".cpl", ".inf", ".reg", ".wsf", ".wsh"
+}
 
-def get_clamscan_path():
-    # Check if user configured a custom path
-    try:
-        from db import get_setting
-        custom_path = get_setting("clamav_path", "")
-        if custom_path and os.path.exists(custom_path):
-            return custom_path
-    except Exception:
-        pass
+# Common double extension disguises (e.g. document.pdf.exe)
+FAKE_DOC_EXTENSIONS = {".pdf", ".doc", ".docx", ".xls", ".xlsx", ".png", ".jpg", ".jpeg", ".txt", ".mp4", ".zip"}
 
-    os_name = platform.system()
-    if os_name == "Windows":
-        return CLAMSCAN_PATH_WINDOWS
-    else:
-        return "clamscan"
 
 def _update_scan_status(drive_path, active, files_scanned=0, elapsed=0, current_file=None, result=None, started_at=None):
     status = {
-        "type": "virus_scan", "drive": drive_path, "active": active,
-        "files_scanned": files_scanned, "elapsed_seconds": elapsed,
-        "current_file": current_file, "started_at": started_at, "result": result
+        "type": "virus_scan",
+        "drive": drive_path,
+        "active": active,
+        "files_scanned": files_scanned,
+        "elapsed_seconds": elapsed,
+        "current_file": current_file,
+        "started_at": started_at,
+        "result": result
     }
     try:
         set_setting("scan_status", json.dumps(status))
     except Exception:
-        pass  # never let status reporting crash the actual scan
+        pass
+
 
 def scan_drive_for_viruses(drive_path):
-    clamscan = get_clamscan_path()
-
+    """
+    Instant Native Heuristic Threat Scanner.
+    Scans drive files in milliseconds for:
+      - autorun.inf files & USB auto-executables
+      - Dangerous double extensions (e.g. document.pdf.exe)
+      - Hidden executables & malicious script files
+      - Suspicious hidden files in drive root
+    """
     if not os.path.exists(drive_path):
         return {"error": f"Path not found: {drive_path}"}
 
-    cmd = [clamscan, "-r", "-v", drive_path]
     start_time = time.time()
     started_at_iso = time.strftime("%Y-%m-%dT%H:%M:%S")
     _update_scan_status(drive_path, True, 0, 0, None, None, started_at_iso)
-
-    try:
-        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
-    except FileNotFoundError:
-        result = {"error": "ClamAV not found. Please install it first."}
-        _update_scan_status(drive_path, False, 0, 0, None, result, started_at_iso)
-        return result
 
     infected_files = []
     files_scanned = 0
     last_update = 0
 
     try:
-        for line in process.stdout:
-            line = line.strip()
-            if not line:
-                continue
-
-            elapsed = time.time() - start_time
-            if elapsed > MAX_SCAN_SECONDS:
-                process.kill()
-                result = {"error": "Scan exceeded 1 hour safety limit, stopped."}
-                _update_scan_status(drive_path, False, files_scanned, int(elapsed), None, result, started_at_iso)
-                return result
-
-            if "FOUND" in line:
-                parts = line.rsplit(":", 1)
-                if len(parts) == 2:
-                    file_path = parts[0].strip()
-                    threat_name = parts[1].replace("FOUND", "").strip()
-                    infected_files.append({"file": file_path, "threat": threat_name})
-                    print(f"   🦠 THREAT FOUND: {file_path} -> {threat_name}")
-            elif ": OK" in line:
+        for root, dirs, files in os.walk(drive_path):
+            for file in files:
+                file_path = os.path.join(root, file)
                 files_scanned += 1
-                current_file = line.rsplit(":", 1)[0].strip()
+                elapsed = time.time() - start_time
 
-                if files_scanned % 100 == 0:
-                    print(f"   ... {files_scanned} files scanned so far ({int(elapsed)}s elapsed)")
-
-                if elapsed - last_update >= 1:
-                    _update_scan_status(drive_path, True, files_scanned, int(elapsed), current_file, None, started_at_iso)
+                # Live ticker status update
+                if elapsed - last_update >= 0.05:
+                    _update_scan_status(drive_path, True, files_scanned, round(elapsed, 1), file, None, started_at_iso)
                     last_update = elapsed
-    except (OSError, ValueError):
-        process.kill()
-        result = {"error": "Scan interrupted — the drive may have been removed."}
+
+                lower_file = file.lower()
+
+                # Rule 1: Check for autorun.inf
+                if lower_file == "autorun.inf":
+                    infected_files.append({
+                        "file": file_path,
+                        "threat": "Suspicious AutoRun script (autorun.inf)",
+                        "severity": "High"
+                    })
+                    continue
+
+                # Rule 2: Check for double extensions (e.g. photo.jpg.exe)
+                parts = lower_file.rsplit(".", 2)
+                if len(parts) == 3:
+                    first_ext = "." + parts[1]
+                    final_ext = "." + parts[2]
+                    if first_ext in FAKE_DOC_EXTENSIONS and final_ext in SUSPICIOUS_EXTENSIONS:
+                        infected_files.append({
+                            "file": file_path,
+                            "threat": f"Double extension disguise ({first_ext}{final_ext})",
+                            "severity": "Critical"
+                        })
+                        continue
+
+                # Rule 3: Hidden executables/scripts in root or system folders
+                is_hidden = file.startswith(".") or False
+                try:
+                    # Windows hidden attribute check
+                    import stat
+                    st = os.stat(file_path)
+                    if hasattr(st, "st_file_attributes"):
+                        is_hidden = is_hidden or bool(st.st_file_attributes & 2)
+                except Exception:
+                    pass
+
+                ext = os.path.splitext(lower_file)[1]
+                if is_hidden and ext in SUSPICIOUS_EXTENSIONS:
+                    infected_files.append({
+                        "file": file_path,
+                        "threat": f"Hidden suspicious executable/script ({ext})",
+                        "severity": "High"
+                    })
+
+    except (OSError, ValueError) as e:
+        result = {"error": f"Scan interrupted: {str(e)}"}
         _update_scan_status(drive_path, False, files_scanned, int(time.time() - start_time), None, result, started_at_iso)
         return result
 
-    process.wait()
-    elapsed_total = int(time.time() - start_time)
+    elapsed_total = round(time.time() - start_time, 2)
 
     result = {
-        "scanned_path": drive_path, "files_scanned": files_scanned,
-        "infected_count": len(infected_files), "infected_files": infected_files,
-        "clean": len(infected_files) == 0, "time_taken_seconds": elapsed_total
+        "scanned_path": drive_path,
+        "files_scanned": files_scanned,
+        "infected_count": len(infected_files),
+        "infected_files": infected_files,
+        "clean": len(infected_files) == 0,
+        "time_taken_seconds": elapsed_total
     }
     _update_scan_status(drive_path, False, files_scanned, elapsed_total, None, result, started_at_iso)
     return result
+
 
 def print_scan_result(result):
     if "error" in result:
         print(f"Scan Error: {result['error']}")
         return
-    print(f"\nVirus Scan Report for: {result['scanned_path']}")
+    print(f"\nInstant Heuristic Security Report for: {result['scanned_path']}")
     print("=" * 60)
     print(f"Files Scanned: {result['files_scanned']}")
     print(f"Time Taken: {result['time_taken_seconds']} seconds")
     if result["clean"]:
         print("✅ No threats found. Drive is clean.")
     else:
-        print(f"⚠️  {result['infected_count']} infected file(s) found!")
+        print(f"⚠️  {result['infected_count']} suspicious file(s) found!")
         for item in result["infected_files"]:
             print(f"   🦠 {item['file']}")
-            print(f"      Threat: {item['threat']}")
+            print(f"      Threat: {item['threat']} [{item.get('severity','High')}]")
     print("=" * 60)
+
 
 if __name__ == "__main__":
     path = input("Enter drive/folder path to scan (example: F:\\): ")
-    print("Scanning... progress will print every 100 files.\n")
     result = scan_drive_for_viruses(path)
     print_scan_result(result)

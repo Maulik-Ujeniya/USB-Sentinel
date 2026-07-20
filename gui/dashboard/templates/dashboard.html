@@ -3,211 +3,168 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>USB-Sentinel — Dashboard</title>
-<meta name="description" content="USB-Sentinel security dashboard — monitor, scan, and protect USB drives in real time.">
+<title>USB-Sentinel — Security Console</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#0A0E14; --panel:#121822; --panel-2:#0E141C; --border:#212B38;
-    --ink:#E7ECF3; --muted:#7C879B;
-    --blue:#4FA6E8; --green:#33D6A6; --amber:#F0B94D; --red:#F2645C; --purple:#A78BFA;
-    --radius:10px;
+    --bg:#07090E; --panel:#0D111A; --panel-2:#0A0E17; --border:#1E293B; --border-glow:rgba(0,240,255,0.25);
+    --ink:#F1F5F9; --muted:#64748B; --submuted:#475569;
+    --cyan:#00F0FF; --emerald:#10B981; --amber:#F59E0B; --red:#EF4444; --purple:#8B5CF6; --blue:#3B82F6;
+    --radius:12px;
   }
   @media (prefers-reduced-motion: reduce){ *{ animation:none !important; transition:none !important; } }
   *{ box-sizing:border-box; }
   html{ scroll-behavior:smooth; }
-  body{ margin:0; background:var(--bg); color:var(--ink); font-family:'Inter',sans-serif; font-size:15px; line-height:1.55; }
-  h1,h2,h3{ font-family:'Space Grotesk',sans-serif; margin:0; }
+  body{ margin:0; background:var(--bg); color:var(--ink); font-family:'Inter',sans-serif; font-size:14px; line-height:1.5; }
+  h1,h2,h3{ font-family:'Space Grotesk',sans-serif; margin:0; letter-spacing:-0.02em; }
   code, .mono{ font-family:'JetBrains Mono',monospace; }
   a{ color:inherit; text-decoration:none; }
   button{ font-family:inherit; cursor:pointer; }
-  :focus-visible{ outline:2px solid var(--blue); outline-offset:2px; }
+  :focus-visible{ outline:2px solid var(--cyan); outline-offset:2px; }
 
   .layout{ display:flex; min-height:100vh; }
 
   /* SIDEBAR */
-  .sidebar{ width:230px; flex-shrink:0; background:var(--panel-2); border-right:1px solid var(--border); padding:20px 16px; position:sticky; top:0; height:100vh; overflow-y:auto; display:flex; flex-direction:column; }
-  .brand{ display:block; font-size:16px; font-weight:700; letter-spacing:0.3px; margin-bottom:2px; }
-  .brand span{ color:var(--blue); }
-  .brand-sub{ color:var(--muted); font-size:11px; margin-bottom:22px; }
-  .nav-link{ display:flex; align-items:center; gap:10px; padding:10px 10px; border-radius:7px; color:var(--muted); font-size:13.5px; font-weight:500; margin-bottom:2px; transition:background 0.15s, color 0.15s; }
-  .nav-link:hover{ background:var(--panel); color:var(--ink); }
-  .nav-link.active{ background:rgba(79,166,232,0.14); color:var(--blue); }
-  .nav-icon{ font-size:14px; width:16px; text-align:center; }
+  .sidebar{ width:240px; flex-shrink:0; background:var(--panel-2); border-right:1px solid var(--border); padding:24px 18px; position:sticky; top:0; height:100vh; overflow-y:auto; display:flex; flex-direction:column; }
+  .brand{ display:flex; align-items:center; gap:10px; font-size:18px; font-weight:700; color:#FFF; margin-bottom:4px; }
+  .brand-logo{ width:26px; height:26px; border-radius:6px; background:linear-gradient(135deg, var(--cyan), var(--blue)); display:flex; align-items:center; justify-content:center; color:#000; font-size:14px; font-weight:800; box-shadow:0 0 12px rgba(0,240,255,0.4); }
+  .brand span{ color:var(--cyan); }
+  .brand-sub{ color:var(--muted); font-size:11px; margin-bottom:24px; text-transform:uppercase; letter-spacing:0.8px; font-weight:600; }
+  .nav-link{ display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:8px; color:var(--muted); font-size:13.5px; font-weight:500; margin-bottom:3px; transition:all 0.15s ease; }
+  .nav-link:hover{ background:rgba(255,255,255,0.04); color:var(--ink); }
+  .nav-link.active{ background:rgba(0,240,255,0.08); color:var(--cyan); border:1px solid rgba(0,240,255,0.2); font-weight:600; }
+  .nav-icon{ font-size:15px; width:18px; text-align:center; }
   .nav-spacer{ flex:1; }
 
   .sidebar-info{ margin-top:auto; padding-top:16px; border-top:1px solid var(--border); }
-  .sidebar-info .label{ color:var(--muted); font-size:10px; text-transform:uppercase; letter-spacing:0.6px; margin-bottom:3px; }
-  .sidebar-info .val{ font-size:12px; word-break:break-all; margin-bottom:12px; }
+  .sidebar-info .label{ color:var(--muted); font-size:10px; text-transform:uppercase; letter-spacing:0.8px; margin-bottom:3px; font-weight:600; }
+  .sidebar-info .val{ font-size:12px; word-break:break-all; margin-bottom:12px; color:var(--ink); }
 
-  /* MAIN */
-  .main{ flex:1; padding:32px 40px 100px; max-width:1150px; }
-  .panel{ background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); padding:24px 26px; margin-bottom:22px; scroll-margin-top:20px; }
-  .panel h2{ font-size:18px; margin-bottom:16px; display:flex; align-items:center; gap:8px; }
-  .panel-sub{ color:var(--muted); font-size:12.5px; margin-top:-14px; margin-bottom:16px; }
-  .count-sub{ color:var(--muted); font-weight:400; font-size:12.5px; }
+  /* MAIN CONTENT */
+  .main{ flex:1; padding:32px 40px 100px; max-width:1180px; }
+  .panel{ background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); padding:24px; margin-bottom:22px; scroll-margin-top:20px; box-shadow:0 4px 20px rgba(0,0,0,0.3); }
+  .panel h2{ font-size:18px; margin-bottom:16px; display:flex; align-items:center; gap:10px; color:#FFF; }
+  .panel-sub{ color:var(--muted); font-size:12.5px; margin-top:-12px; margin-bottom:18px; }
+  .count-sub{ color:var(--muted); font-weight:400; font-size:13px; }
 
   /* STATUS BAR */
-  .status-bar{ display:flex; align-items:center; gap:8px; padding:10px 16px; border-radius:8px; font-size:13px; margin-bottom:12px; border:1px solid var(--border); transition:all 0.3s; }
-  .status-bar.on{ background:rgba(51,214,166,0.08); border-color:rgba(51,214,166,0.3); color:var(--green); }
-  .status-bar.off{ background:rgba(242,100,92,0.08); border-color:rgba(242,100,92,0.3); color:var(--red); }
-  .status-bar code{ background:var(--panel-2); padding:2px 7px; border-radius:5px; color:var(--ink); }
-  .status-bar .start-btn{ background:var(--green); color:#0A0E14; border:none; padding:5px 14px; border-radius:6px; font-size:12px; font-weight:600; margin-left:auto; }
-  .status-bar .start-btn:hover{ opacity:0.85; }
+  .status-bar{ display:flex; align-items:center; gap:12px; padding:12px 18px; border-radius:10px; font-size:13.5px; margin-bottom:18px; border:1px solid var(--border); transition:all 0.3s ease; }
+  .status-bar.on{ background:rgba(16,185,129,0.08); border-color:rgba(16,185,129,0.3); color:var(--emerald); box-shadow:0 0 15px rgba(16,185,129,0.1); }
+  .status-bar.off{ background:rgba(239,68,68,0.08); border-color:rgba(239,68,68,0.3); color:var(--red); }
+  .status-bar code{ background:rgba(0,0,0,0.4); padding:3px 8px; border-radius:6px; color:var(--ink); border:1px solid var(--border); }
+  .status-bar .start-btn{ background:var(--emerald); color:#000; border:none; padding:6px 16px; border-radius:7px; font-size:12px; font-weight:700; margin-left:auto; transition:all 0.15s; }
+  .status-bar .start-btn:hover{ filter:brightness(1.1); transform:translateY(-1px); }
 
-  /* SCAN STATUS */
-  .scan-status{ background:rgba(79,166,232,0.08); border:1px solid rgba(79,166,232,0.3); color:var(--blue); padding:10px 16px; border-radius:8px; font-size:13px; margin-bottom:12px; }
-  .scan-status .scan-file{ display:block; font-family:'JetBrains Mono',monospace; font-size:11.5px; color:var(--muted); margin-top:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  /* SCAN STREAM TICKER */
+  .ticker-box{ background:linear-gradient(135deg, rgba(0,240,255,0.05), rgba(139,92,246,0.05)); border:1px solid rgba(0,240,255,0.3); border-radius:10px; padding:16px; margin-bottom:18px; display:none; animation:fadeIn 0.3s ease; }
+  .ticker-header{ display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+  .ticker-title{ font-weight:700; font-size:13px; text-transform:uppercase; letter-spacing:0.8px; color:var(--cyan); display:flex; align-items:center; gap:8px; }
+  .ticker-pulse{ width:8px; height:8px; border-radius:50%; background:var(--cyan); box-shadow:0 0 10px var(--cyan); animation:pulse 1s infinite alternate; }
+  @keyframes pulse{ from{opacity:0.4;transform:scale(0.8);} to{opacity:1;transform:scale(1.2);} }
+  .ticker-file{ font-family:'JetBrains Mono',monospace; font-size:12.5px; color:#FFF; background:rgba(0,0,0,0.5); padding:8px 12px; border-radius:6px; border:1px solid var(--border); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-top:6px; display:flex; align-items:center; gap:8px; }
+  .ticker-file .icon{ font-size:14px; flex-shrink:0; }
 
-  /* HERO */
+  /* HERO OVERVIEW */
   .hero{ display:flex; gap:32px; align-items:center; flex-wrap:wrap; }
   .stamp{ width:120px; height:120px; border-radius:50%; flex-shrink:0;
-    background:conic-gradient(var(--ring-color,var(--blue)) calc(max(var(--pct,0),3)*3.6deg), var(--border) 0deg);
+    background:conic-gradient(var(--ring-color,var(--cyan)) calc(max(var(--pct,0),3)*3.6deg), var(--border) 0deg);
     -webkit-mask:radial-gradient(farthest-side, transparent calc(100% - 12px), #000 calc(100% - 12px));
     mask:radial-gradient(farthest-side, transparent calc(100% - 12px), #000 calc(100% - 12px));
     display:flex; align-items:center; justify-content:center; }
   .stamp-inner{ width:96px; height:96px; border-radius:50%; background:var(--panel); display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; }
-  .stamp-inner .pct{ font-family:'Space Grotesk'; font-size:26px; font-weight:700; }
-  .stamp-inner .txt{ font-size:9px; letter-spacing:0.6px; color:var(--muted); margin-top:2px; text-transform:uppercase; }
-  .hero-stats{ display:flex; gap:30px; flex-wrap:wrap; flex:1; }
-  .stat .num{ font-family:'Space Grotesk'; font-size:30px; font-weight:600; }
-  .stat .lbl{ color:var(--muted); font-size:12px; margin-top:3px; }
+  .stamp-inner .pct{ font-family:'Space Grotesk'; font-size:26px; font-weight:700; color:#FFF; }
+  .stamp-inner .txt{ font-size:9px; letter-spacing:0.8px; color:var(--muted); margin-top:2px; text-transform:uppercase; font-weight:600; }
+  .hero-stats{ display:flex; gap:28px; flex-wrap:wrap; flex:1; }
+  .stat .num{ font-family:'Space Grotesk'; font-size:28px; font-weight:700; color:#FFF; }
+  .stat .lbl{ color:var(--muted); font-size:12px; margin-top:2px; font-weight:500; }
   .stat .num.amber{ color:var(--amber); }
 
-  .capacity-bar{ height:11px; border-radius:6px; background:var(--border); overflow:hidden; margin:20px 0 8px; }
-  .capacity-fill{ height:100%; border-radius:6px; transition: width 0.5s ease; }
-  .capacity-caption{ display:flex; justify-content:space-between; font-size:12.5px; color:var(--muted); }
-  .capacity-caption b{ color:var(--ink); font-weight:500; }
+  .capacity-bar{ height:8px; border-radius:4px; background:var(--border); overflow:hidden; margin:20px 0 8px; }
+  .capacity-fill{ height:100%; border-radius:4px; transition:width 0.5s ease; }
+  .capacity-caption{ display:flex; justify-content:space-between; font-size:12px; color:var(--muted); }
+  .capacity-caption b{ color:var(--ink); font-weight:600; }
 
-  /* LIVE DRIVES */
-  .drive-card{ background:var(--panel-2); border:1px solid var(--border); border-radius:8px; padding:16px; margin-bottom:10px; display:flex; align-items:center; gap:16px; transition:border-color 0.2s; }
-  .drive-card:hover{ border-color:var(--blue); }
-  .drive-card .drive-icon{ font-size:28px; }
+  /* CONNECTED DRIVES */
+  .drive-card{ background:var(--panel-2); border:1px solid var(--border); border-radius:10px; padding:18px; margin-bottom:12px; display:flex; align-items:center; gap:18px; transition:all 0.2s ease; }
+  .drive-card:hover{ border-color:rgba(0,240,255,0.4); box-shadow:0 0 15px rgba(0,240,255,0.05); }
+  .drive-card .drive-icon{ font-size:32px; width:44px; height:44px; border-radius:8px; background:rgba(0,240,255,0.1); border:1px solid rgba(0,240,255,0.2); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
   .drive-card .drive-info{ flex:1; }
-  .drive-card .drive-name{ font-weight:600; font-size:14px; }
-  .drive-card .drive-detail{ color:var(--muted); font-size:12px; margin-top:2px; }
-  .drive-card .drive-detail .mono{ font-size:11px; }
-  .drive-usage-bar{ height:5px; background:var(--border); border-radius:3px; margin-top:6px; width:160px; }
-  .drive-usage-fill{ height:100%; border-radius:3px; background:var(--blue); }
-  .drive-card .drive-actions{ display:flex; gap:6px; }
-  .action-btn{ background:var(--panel); border:1px solid var(--border); color:var(--ink); padding:6px 12px; border-radius:6px; font-size:11.5px; font-weight:500; transition:all 0.15s; }
-  .action-btn:hover{ border-color:var(--blue); color:var(--blue); }
-  .action-btn.trust{ color:var(--green); } .action-btn.trust:hover{ border-color:var(--green); }
-  .action-btn.untrust{ color:var(--amber); } .action-btn.untrust:hover{ border-color:var(--amber); }
-  .action-btn.eject{ color:var(--red); } .action-btn.eject:hover{ border-color:var(--red); }
-  .action-btn.scan{ color:var(--blue); } .action-btn.scan:hover{ border-color:var(--blue); }
-  .badge-sm{ padding:2px 8px; border-radius:4px; font-size:10px; font-weight:600; }
-  .badge-sm.trusted{ background:rgba(51,214,166,0.14); color:var(--green); }
-  .badge-sm.blocked{ background:rgba(242,100,92,0.14); color:var(--red); }
+  .drive-card .drive-name{ font-weight:700; font-size:15px; color:#FFF; display:flex; align-items:center; gap:8px; }
+  .drive-card .drive-detail{ color:var(--muted); font-size:12px; margin-top:3px; }
+  .drive-usage-bar{ height:5px; background:var(--border); border-radius:3px; margin-top:8px; width:180px; overflow:hidden; }
+  .drive-usage-fill{ height:100%; border-radius:3px; background:var(--cyan); }
+  .drive-card .drive-actions{ display:flex; gap:8px; flex-wrap:wrap; }
+  .action-btn{ background:var(--panel); border:1px solid var(--border); color:var(--ink); padding:7px 14px; border-radius:7px; font-size:12px; font-weight:600; transition:all 0.15s ease; }
+  .action-btn:hover{ border-color:var(--cyan); color:var(--cyan); transform:translateY(-1px); }
+  .action-btn.trust{ color:var(--emerald); border-color:rgba(16,185,129,0.3); } .action-btn.trust:hover{ background:rgba(16,185,129,0.1); }
+  .action-btn.untrust{ color:var(--amber); border-color:rgba(245,158,11,0.3); } .action-btn.untrust:hover{ background:rgba(245,158,11,0.1); }
+  .action-btn.eject{ color:var(--red); border-color:rgba(239,68,68,0.3); } .action-btn.eject:hover{ background:rgba(239,68,68,0.1); }
+  .action-btn.scan{ color:var(--cyan); border-color:rgba(0,240,255,0.3); } .action-btn.scan:hover{ background:rgba(0,240,255,0.1); }
+  .badge-sm{ padding:3px 8px; border-radius:5px; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.4px; }
+  .badge-sm.trusted{ background:rgba(16,185,129,0.15); color:var(--emerald); border:1px solid rgba(16,185,129,0.3); }
+  .badge-sm.blocked{ background:rgba(239,68,68,0.15); color:var(--red); border:1px solid rgba(239,68,68,0.3); }
 
   /* LIVE SCAN MONITOR */
-  .scan-monitor{ border:1px solid var(--border); border-radius:8px; padding:18px; margin-bottom:10px; background:var(--panel-2); }
-  .scan-monitor.active{ border-color:rgba(79,166,232,0.4); }
+  .scan-monitor{ border:1px solid var(--border); border-radius:10px; padding:18px; margin-bottom:12px; background:var(--panel-2); transition:all 0.2s ease; }
+  .scan-monitor.active{ border-color:rgba(0,240,255,0.4); box-shadow:0 0 15px rgba(0,240,255,0.08); }
   .scan-monitor .scan-header{ display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
-  .scan-monitor .scan-title{ font-weight:600; font-size:14px; }
-  .scan-progress-bar{ height:6px; background:var(--border); border-radius:3px; overflow:hidden; margin-bottom:8px; }
-  .scan-progress-fill{ height:100%; background:linear-gradient(90deg, var(--blue), var(--purple)); border-radius:3px; transition:width 0.3s; }
-  .scan-progress-fill.indeterminate{ width:30% !important; animation:indeterminate 1.5s ease-in-out infinite; }
-  @keyframes indeterminate{ 0%{transform:translateX(-100%);} 100%{transform:translateX(400%);} }
-  .scan-stats{ display:flex; gap:24px; font-size:12.5px; color:var(--muted); flex-wrap:wrap; }
+  .scan-monitor .scan-title{ font-weight:700; font-size:14px; color:#FFF; display:flex; align-items:center; gap:8px; }
+  .scan-progress-bar{ height:6px; background:var(--border); border-radius:3px; overflow:hidden; margin-bottom:10px; }
+  .scan-progress-fill{ height:100%; background:linear-gradient(90deg, var(--cyan), var(--purple)); border-radius:3px; transition:width 0.2s; }
+  .scan-progress-fill.indeterminate{ width:35% !important; animation:indeterminate 1.4s ease-in-out infinite; }
+  @keyframes indeterminate{ 0%{transform:translateX(-100%);} 100%{transform:translateX(350%);} }
+  .scan-stats{ display:flex; gap:20px; font-size:12.5px; color:var(--muted); flex-wrap:wrap; }
   .scan-stats b{ color:var(--ink); }
-  .scan-current-file{ font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--muted); margin-top:6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
-  /* ACTIVITY LOG */
-  .activity-item{ display:flex; gap:12px; align-items:flex-start; padding:10px 0; border-bottom:1px solid var(--panel-2); font-size:13px; }
-  .activity-item:last-child{ border-bottom:none; }
-  .activity-dot{ width:8px; height:8px; border-radius:50%; margin-top:6px; flex-shrink:0; }
-  .activity-dot.insert{ background:var(--green); } .activity-dot.scan{ background:var(--blue); }
-  .activity-dot.threat{ background:var(--red); } .activity-dot.settings{ background:var(--amber); }
-  .activity-dot.default{ background:var(--muted); }
-  .activity-time{ color:var(--muted); font-size:11px; font-family:'JetBrains Mono',monospace; flex-shrink:0; width:70px; }
-  .activity-msg{ flex:1; }
-
-  /* SCAN HISTORY */
-  .history-row{ display:grid; grid-template-columns:90px 1fr 0.7fr 0.6fr 0.5fr 80px; gap:12px; padding:10px 0; border-bottom:1px solid var(--panel-2); font-size:12.5px; align-items:center; }
-  .history-row:last-child{ border-bottom:none; }
-  .history-head{ color:var(--muted); font-size:11px; text-transform:uppercase; letter-spacing:0.4px; border-bottom:1px solid var(--border); padding-bottom:8px; }
-  .history-badge{ padding:3px 8px; border-radius:5px; font-size:10px; font-weight:600; display:inline-block; }
-  .history-badge.complete{ background:rgba(51,214,166,0.14); color:var(--green); }
-  .history-badge.running{ background:rgba(79,166,232,0.14); color:var(--blue); }
-  .history-badge.error{ background:rgba(242,100,92,0.14); color:var(--red); }
-
-  /* CATEGORY BAR */
-  .catbar{ display:flex; height:36px; border-radius:6px; overflow:hidden; border:1px solid var(--border); margin-bottom:18px; }
-  .catbar .seg{ flex-basis:0; min-width:14px; display:flex; align-items:center; justify-content:center; overflow:hidden; cursor:pointer; transition:opacity 0.15s; }
-  .catbar .seg:hover{ opacity:0.85; }
-  .seg-label{ font-size:11px; font-weight:600; color:#0A0E14; background:rgba(255,255,255,0.8); padding:2px 7px; border-radius:4px; white-space:nowrap; }
-  .legend{ display:grid; grid-template-columns:repeat(auto-fill, minmax(170px,1fr)); gap:10px; }
-  .legend-item{ display:flex; align-items:center; gap:8px; font-size:13px; background:var(--panel-2); border:1px solid var(--border); border-radius:7px; padding:9px 12px; transition:border-color 0.15s; }
-  .legend-item:hover{ border-color:var(--muted); }
-  .legend-dot{ width:10px; height:10px; border-radius:3px; flex-shrink:0; }
-  .legend-item .n{ color:var(--muted); font-size:11.5px; display:block; }
-
-  .chip[data-cat="Image"]{ --c:#5EC2E8; } .chip[data-cat="Video"]{ --c:#8A7FF0; }
-  .chip[data-cat="Audio"]{ --c:#4FD1C5; } .chip[data-cat="Document"]{ --c:#6FA8DC; }
-  .chip[data-cat="PDF"]{ --c:#E88B9E; } .chip[data-cat="Spreadsheet"]{ --c:#6FCF97; }
-  .chip[data-cat="Presentation"]{ --c:#C9A45C; } .chip[data-cat="Code"]{ --c:#B4D66B; }
-  .chip[data-cat="Archive"]{ --c:#B98CE0; } .chip[data-cat="Executable"]{ --c:#E0785A; }
-  .chip[data-cat="Other"]{ --c:#7C879B; }
-  .seg, .legend-dot{ background:var(--c,#7C879B); }
-  .seg{ flex-grow:var(--grow,1); }
-
-  /* CHANGES */
-  .change-group{ border:1px solid var(--border); border-radius:8px; margin-bottom:8px; overflow:hidden; }
-  .change-group summary{ list-style:none; cursor:pointer; padding:12px 14px; background:var(--panel-2); font-size:13.5px; font-weight:500; transition:background 0.15s; }
-  .change-group summary:hover{ background:var(--panel); }
-  .change-group summary::-webkit-details-marker{ display:none; }
-  .change-group summary .chev{ color:var(--muted); font-size:11px; margin-right:6px; transition:transform 0.15s; }
-  .change-group[open] summary .chev{ transform:rotate(90deg); }
-  .change-group summary.add{ color:var(--green); } .change-group summary.rem{ color:var(--red); } .change-group summary.mod{ color:var(--amber); }
-  .change-item{ display:grid; grid-template-columns:20px 1.4fr 1.6fr 1fr; gap:10px; padding:8px 14px; font-size:12.5px; align-items:center; border-top:1px solid var(--panel-2); }
-  .ci-folder{ color:var(--muted); font-size:11px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .ci-size{ text-align:right; font-family:'JetBrains Mono'; font-size:11.5px; }
-  .empty-note{ color:var(--muted); font-size:13px; padding:10px 0; }
-
-  /* DUPLICATES */
-  .dupgroup{ border:1px solid var(--border); border-radius:8px; margin-bottom:10px; overflow:hidden; }
-  .dupgroup summary{ list-style:none; cursor:pointer; padding:13px 15px; display:flex; justify-content:space-between; align-items:center; background:var(--panel-2); font-size:13.5px; transition:background 0.15s; }
+  /* DUPLICATE SHA-256 HASH BADGES */
+  .hash-badge{ font-family:'JetBrains Mono',monospace; font-size:10.5px; background:rgba(139,92,246,0.15); color:var(--purple); border:1px solid rgba(139,92,246,0.3); padding:2px 7px; border-radius:4px; font-weight:600; }
+  .dupgroup{ border:1px solid var(--border); border-radius:10px; margin-bottom:10px; overflow:hidden; background:var(--panel-2); }
+  .dupgroup summary{ list-style:none; cursor:pointer; padding:14px 18px; display:flex; justify-content:space-between; align-items:center; font-size:13.5px; font-weight:600; color:#FFF; transition:background 0.15s; }
   .dupgroup summary:hover{ background:var(--panel); }
   .dupgroup summary::-webkit-details-marker{ display:none; }
-  .dupgroup summary .chev{ color:var(--muted); font-size:11px; margin-right:6px; transition:transform 0.15s; }
+  .dupgroup summary .chev{ color:var(--muted); font-size:11px; margin-right:8px; transition:transform 0.15s; }
   .dupgroup[open] summary .chev{ transform:rotate(90deg); }
-  .dupgroup .waste{ color:var(--amber); font-weight:500; }
-  .dup-body{ padding:8px 15px 14px; }
-  .dup-file{ display:grid; grid-template-columns:66px 1.6fr 1.6fr 0.8fr; gap:10px; align-items:center; padding:7px 0; font-size:12.5px; border-bottom:1px solid var(--panel-2); }
+  .dupgroup .waste{ color:var(--amber); font-weight:600; }
+  .dup-body{ padding:10px 18px 16px; border-top:1px solid var(--border); }
+  .dup-file{ display:grid; grid-template-columns:70px 1.6fr 1.6fr 0.8fr; gap:12px; align-items:center; padding:8px 0; font-size:12.5px; border-bottom:1px solid rgba(255,255,255,0.03); }
   .dup-file:last-child{ border-bottom:none; }
-  .tag{ font-size:9.5px; font-weight:700; padding:3px 6px; border-radius:4px; text-align:center; letter-spacing:0.3px; }
-  .tag-orig{ background:rgba(51,214,166,0.15); color:var(--green); } .tag-copy{ background:rgba(240,185,77,0.15); color:var(--amber); }
-  .dup-folder{ color:var(--muted); font-size:11px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .tag{ font-size:9.5px; font-weight:800; padding:3px 6px; border-radius:4px; text-align:center; letter-spacing:0.4px; }
+  .tag-orig{ background:rgba(16,185,129,0.15); color:var(--emerald); border:1px solid rgba(16,185,129,0.3); }
+  .tag-copy{ background:rgba(245,158,11,0.15); color:var(--amber); border:1px solid rgba(245,158,11,0.3); }
 
-  /* LARGEST FILES */
-  .controls-row{ display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:16px; }
-  .btn-group{ display:flex; gap:6px; }
-  .count-btn, .filter-btn{ background:var(--panel-2); border:1px solid var(--border); color:var(--muted); padding:7px 13px; border-radius:7px; cursor:pointer; font-size:12.5px; transition:all 0.15s; }
-  .count-btn:hover, .filter-btn:hover{ color:var(--ink); }
-  .count-btn.active{ background:rgba(79,166,232,0.14); border-color:var(--blue); color:var(--blue); }
-  .rank-row{ display:grid; grid-template-columns:24px 1fr 100px; gap:12px; align-items:center; padding:10px 0; border-bottom:1px solid var(--border); }
-  .rank-row:last-child{ border-bottom:none; }
-  .rank-num{ color:var(--muted); font-size:12.5px; }
-  .rank-path{ font-family:'JetBrains Mono'; font-size:12.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .rank-folder{ font-size:10.5px; color:var(--muted); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .rank-bar-bg{ height:4px; background:var(--border); border-radius:2px; margin-top:6px; }
-  .rank-bar{ height:100%; background:var(--blue); border-radius:2px; transition:width 0.3s; }
-  .rank-size{ font-family:'JetBrains Mono'; font-size:12.5px; color:var(--ink); text-align:right; }
+  /* STORAGE CATEGORY BAR */
+  .catbar{ display:flex; height:36px; border-radius:8px; overflow:hidden; border:1px solid var(--border); margin-bottom:18px; }
+  .catbar .seg{ flex-basis:0; min-width:14px; display:flex; align-items:center; justify-content:center; overflow:hidden; cursor:pointer; transition:opacity 0.15s; }
+  .catbar .seg:hover{ opacity:0.85; }
+  .seg-label{ font-size:11px; font-weight:700; color:#000; background:rgba(255,255,255,0.85); padding:2px 7px; border-radius:4px; white-space:nowrap; }
+  .legend{ display:grid; grid-template-columns:repeat(auto-fill, minmax(170px,1fr)); gap:10px; }
+  .legend-item{ display:flex; align-items:center; gap:10px; font-size:13px; background:var(--panel-2); border:1px solid var(--border); border-radius:8px; padding:10px 14px; }
+  .legend-dot{ width:10px; height:10px; border-radius:3px; flex-shrink:0; }
+  .legend-item .n{ color:var(--muted); font-size:11.5px; display:block; margin-top:1px; }
+
+  .chip[data-cat="Image"]{ --c:#38BDF8; } .chip[data-cat="Video"]{ --c:#A78BFA; }
+  .chip[data-cat="Audio"]{ --c:#34D399; } .chip[data-cat="Document"]{ --c:#60A5FA; }
+  .chip[data-cat="PDF"]{ --c:#F87171; } .chip[data-cat="Spreadsheet"]{ --c:#4ADE80; }
+  .chip[data-cat="Presentation"]{ --c:#FBBF24; } .chip[data-cat="Code"]{ --c:#A3E635; }
+  .chip[data-cat="Archive"]{ --c:#C084FC; } .chip[data-cat="Executable"]{ --c:#FB923C; }
+  .chip[data-cat="Other"]{ --c:#64748B; }
+  .seg, .legend-dot{ background:var(--c,#64748B); }
+  .seg{ flex-grow:var(--grow,1); }
 
   /* FILE TABLE */
-  .controls{ position:sticky; top:0; background:var(--panel); z-index:5; padding-bottom:14px; display:flex; gap:8px; flex-wrap:wrap; }
-  #searchBox{ background:var(--panel-2); border:1px solid var(--border); color:var(--ink); padding:9px 13px; border-radius:7px; width:250px; font-size:13.5px; font-family:inherit; }
+  .controls{ position:sticky; top:0; background:var(--panel); z-index:5; padding-bottom:14px; display:flex; gap:8px; flex-wrap:wrap; border-bottom:1px solid var(--border); margin-bottom:14px; }
+  #searchBox{ background:var(--panel-2); border:1px solid var(--border); color:var(--ink); padding:9px 14px; border-radius:8px; width:260px; font-size:13px; font-family:inherit; }
   #searchBox::placeholder{ color:var(--muted); }
-  .filter-btn.active{ background:rgba(79,166,232,0.14); border-color:var(--blue); color:var(--blue); }
-  .result-count{ color:var(--muted); font-size:12px; margin-bottom:10px; }
+  .filter-btn{ background:var(--panel-2); border:1px solid var(--border); color:var(--muted); padding:8px 14px; border-radius:8px; cursor:pointer; font-size:12.5px; font-weight:500; transition:all 0.15s; }
+  .filter-btn:hover{ color:var(--ink); border-color:var(--submuted); }
+  .filter-btn.active{ background:rgba(0,240,255,0.1); border-color:var(--cyan); color:var(--cyan); font-weight:600; }
+  .result-count{ color:var(--muted); font-size:12px; margin-bottom:12px; font-weight:500; }
 
-  .file-head, details.file-row summary{ display:grid; grid-template-columns:20px 2.1fr 1fr 0.7fr 0.85fr 1.5fr; gap:10px; align-items:center; padding:10px 6px; }
-  .file-head{ color:var(--muted); font-size:11px; text-transform:uppercase; letter-spacing:0.4px; border-bottom:1px solid var(--border); }
+  .file-head, details.file-row summary{ display:grid; grid-template-columns:20px 2.1fr 1fr 0.7fr 0.85fr 1.5fr; gap:10px; align-items:center; padding:10px 8px; }
+  .file-head{ color:var(--muted); font-size:11px; text-transform:uppercase; letter-spacing:0.6px; border-bottom:1px solid var(--border); font-weight:700; }
   .sort-head{ background:none; border:none; color:inherit; font:inherit; text-transform:inherit; letter-spacing:inherit; cursor:pointer; display:flex; align-items:center; gap:4px; padding:0; }
-  .sort-head .arrow{ font-size:9px; }
-  details.file-row{ padding:0; display:block; border-bottom:1px solid var(--panel-2); }
+  details.file-row{ padding:0; display:block; border-bottom:1px solid rgba(255,255,255,0.03); }
   details.file-row summary{ list-style:none; cursor:pointer; }
   details.file-row summary::-webkit-details-marker{ display:none; }
   details.file-row.no-detail summary{ cursor:default; }
@@ -215,60 +172,55 @@
   .file-row:hover summary{ background:var(--panel-2); }
   .chev{ color:var(--muted); font-size:10px; transition:transform 0.15s; }
   details[open] .chev{ transform:rotate(90deg); }
-  .f-name{ display:flex; align-items:center; gap:8px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .f-name{ display:flex; align-items:center; gap:8px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#FFF; font-weight:500; }
   .f-cat{ display:flex; align-items:center; gap:6px; font-size:12.5px; }
   .f-dot{ width:8px; height:8px; border-radius:2px; }
-  .f-ext, .f-size{ font-family:'JetBrains Mono'; font-size:12.5px; color:var(--muted); }
+  .f-ext, .f-size{ font-family:'JetBrains Mono'; font-size:12px; color:var(--muted); }
   .f-folder{ font-family:'JetBrains Mono'; font-size:11.5px; color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .f-detail{ padding:4px 6px 16px 40px; font-size:12.5px; color:var(--muted); }
-  .f-detail .row{ margin-bottom:4px; }
-  .f-detail .sig-yes{ color:var(--green); } .f-detail .sig-no{ color:var(--amber); }
 
-  /* EMPTY STATE */
-  .empty-state{ text-align:center; padding:80px 20px; color:var(--muted); }
-  .empty-state h2{ color:var(--ink); margin-bottom:8px; }
-  .empty-state code{ background:var(--panel); padding:2px 8px; border-radius:5px; }
+  /* INPUT & SCAN CONTROLS */
+  .scan-input-row{ display:flex; gap:10px; margin-bottom:18px; align-items:center; }
+  .scan-input-row input{ background:var(--panel-2); border:1px solid var(--border); color:var(--ink); padding:10px 14px; border-radius:8px; font-size:13px; font-family:'JetBrains Mono',monospace; flex:1; }
+  .scan-input-row input::placeholder{ color:var(--muted); }
+  .scan-btn{ background:linear-gradient(135deg, var(--cyan), var(--blue)); color:#000; border:none; padding:10px 20px; border-radius:8px; font-weight:700; font-size:13px; transition:all 0.15s; box-shadow:0 0 12px rgba(0,240,255,0.25); }
+  .scan-btn:hover{ filter:brightness(1.1); transform:translateY(-1px); }
+  .scan-btn:disabled{ opacity:0.5; cursor:not-allowed; transform:none; }
+  .scan-btn.sec{ background:linear-gradient(135deg, var(--emerald), #059669); color:#000; box-shadow:0 0 12px rgba(16,185,129,0.25); }
 
-  /* TOAST */
+  /* ACTIVITY LOG */
+  .activity-item{ display:flex; gap:14px; align-items:flex-start; padding:12px 0; border-bottom:1px solid rgba(255,255,255,0.03); font-size:13px; }
+  .activity-item:last-child{ border-bottom:none; }
+  .activity-dot{ width:8px; height:8px; border-radius:50%; margin-top:5px; flex-shrink:0; }
+  .activity-dot.insert{ background:var(--emerald); box-shadow:0 0 8px var(--emerald); }
+  .activity-dot.scan{ background:var(--cyan); box-shadow:0 0 8px var(--cyan); }
+  .activity-dot.threat{ background:var(--red); box-shadow:0 0 8px var(--red); }
+  .activity-dot.default{ background:var(--muted); }
+  .activity-time{ color:var(--muted); font-size:11.5px; font-family:'JetBrains Mono',monospace; flex-shrink:0; width:70px; }
+  .activity-msg{ flex:1; color:var(--ink); }
+
+  /* TOAST NOTIFICATIONS */
   .toast-container{ position:fixed; bottom:24px; right:24px; z-index:1000; display:flex; flex-direction:column; gap:8px; }
-  .toast{ background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:12px 18px; font-size:13px; box-shadow:0 8px 24px rgba(0,0,0,0.4); animation:toastIn 0.3s ease; display:flex; align-items:center; gap:8px; max-width:400px; }
-  .toast.success{ border-color:rgba(51,214,166,0.4); } .toast.error{ border-color:rgba(242,100,92,0.4); } .toast.info{ border-color:rgba(79,166,232,0.4); }
+  .toast{ background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:12px 18px; font-size:13px; font-weight:500; box-shadow:0 8px 30px rgba(0,0,0,0.5); animation:toastIn 0.3s ease; display:flex; align-items:center; gap:10px; max-width:400px; color:#FFF; }
+  .toast.success{ border-color:rgba(16,185,129,0.5); } .toast.error{ border-color:rgba(239,68,68,0.5); } .toast.info{ border-color:rgba(0,240,255,0.5); }
   @keyframes toastIn{ from{transform:translateY(20px);opacity:0;} to{transform:translateY(0);opacity:1;} }
 
-  .back-to-top{ position:fixed; bottom:24px; left:24px; width:44px; height:44px; border-radius:50%;
-    background:var(--blue); color:#0A0E14; border:none; font-size:18px; cursor:pointer;
-    opacity:0; pointer-events:none; transition:opacity 0.2s, transform 0.2s; transform:translateY(10px); }
+  .back-to-top{ position:fixed; bottom:24px; left:24px; width:42px; height:42px; border-radius:50%;
+    background:var(--cyan); color:#000; border:none; font-size:18px; font-weight:800; cursor:pointer;
+    opacity:0; pointer-events:none; transition:all 0.2s ease; transform:translateY(10px); box-shadow:0 0 15px rgba(0,240,255,0.3); }
   .back-to-top.visible{ opacity:1; pointer-events:auto; transform:translateY(0); }
-
-  /* Spinner */
-  .spinner{ display:inline-block; width:14px; height:14px; border:2px solid var(--border); border-top-color:var(--blue); border-radius:50%; animation:spin 0.6s linear infinite; }
+  .empty-note{ color:var(--muted); font-size:13px; padding:12px 0; }
+  .spinner{ display:inline-block; width:14px; height:14px; border:2px solid var(--border); border-top-color:var(--cyan); border-radius:50%; animation:spin 0.6s linear infinite; }
   @keyframes spin{ to{transform:rotate(360deg);} }
-
-  /* Scan drive selector */
-  .scan-input-row{ display:flex; gap:8px; margin-bottom:16px; align-items:center; }
-  .scan-input-row select, .scan-input-row input{ background:var(--panel-2); border:1px solid var(--border); color:var(--ink); padding:9px 13px; border-radius:7px; font-size:13px; font-family:inherit; }
-  .scan-input-row select{ min-width:180px; }
-  .scan-input-row input{ flex:1; }
-  .scan-btn{ background:var(--blue); color:#0A0E14; border:none; padding:9px 18px; border-radius:7px; font-weight:600; font-size:13px; transition:opacity 0.15s; }
-  .scan-btn:hover{ opacity:0.85; }
-  .scan-btn:disabled{ opacity:0.5; cursor:not-allowed; }
-  .scan-btn.virus{ background:var(--amber); }
 
   @media (max-width: 860px){
     .layout{ flex-direction:column; }
-    .sidebar{ position:static; width:100%; height:auto; display:flex; align-items:center; gap:2px; overflow-x:auto; padding:14px 16px; }
-    .sidebar-info{ display:none; }
-    .brand, .brand-sub{ display:none; }
-    .nav-spacer{ display:none; }
+    .sidebar{ position:static; width:100%; height:auto; display:flex; align-items:center; gap:4px; overflow-x:auto; padding:14px 16px; }
+    .sidebar-info, .brand-sub, .nav-spacer{ display:none; }
     .main{ padding:20px 16px 60px; }
     .file-head{ display:none; }
     details.file-row summary{ grid-template-columns:16px 1fr 70px; }
     .f-cat span.txt, .f-folder{ display:none; }
-    .dup-file, .change-item{ grid-template-columns:50px 1fr 70px; }
-    .dup-folder, .ci-folder{ display:none; }
     .drive-card{ flex-wrap:wrap; }
-    .history-row{ grid-template-columns:1fr 1fr 80px; }
-    .history-row span:nth-child(4), .history-row span:nth-child(5){ display:none; }
   }
 </style>
 </head>
@@ -276,18 +228,18 @@
 
 <div class="layout">
   <nav class="sidebar">
-    <a href="#overview" class="brand">USB-<span>Sentinel</span></a>
-    <div class="brand-sub">Security Dashboard</div>
+    <div class="brand">
+      <div class="brand-logo">🛡️</div>
+      USB-<span>Sentinel</span>
+    </div>
+    <div class="brand-sub">Security Console</div>
 
-    <a class="nav-link" href="#overview"><span class="nav-icon">▣</span>Overview</a>
+    <a class="nav-link active" href="#overview"><span class="nav-icon">▣</span>Overview</a>
     <a class="nav-link" href="#live-drives"><span class="nav-icon">💾</span>Live Drives</a>
     <a class="nav-link" href="#scan-monitor"><span class="nav-icon">🔍</span>Scan Monitor</a>
     <a class="nav-link" href="#files"><span class="nav-icon">🗂</span>All Files</a>
     <a class="nav-link" href="#duplicates"><span class="nav-icon">⧉</span>Duplicates</a>
-    <a class="nav-link" href="#largest"><span class="nav-icon">📶</span>Largest Files</a>
-    <a class="nav-link" href="#changes"><span class="nav-icon">↺</span>Changes</a>
     <a class="nav-link" href="#activity"><span class="nav-icon">📋</span>Activity Log</a>
-    <a class="nav-link" href="#history"><span class="nav-icon">🕐</span>Scan History</a>
     <a class="nav-link" href="/settings"><span class="nav-icon">⚙</span>Settings</a>
 
     <div class="nav-spacer"></div>
@@ -297,7 +249,7 @@
       <div class="label">Drive / Folder</div>
       <div class="val mono">{{ data.drive_path }}</div>
       <div class="label">Scanned</div>
-      <div class="val mono">{{ data.scan_date[:19] }}</div>
+      <div class="val mono">{{ data.scan_date[:19].replace('T',' ') }}</div>
     </div>
     {% endif %}
   </nav>
@@ -307,15 +259,23 @@
     <!-- Status Bar -->
     <div class="status-bar {{ 'on' if status.active else 'off' }}" id="statusBar">
       {% if status.active %}
-        🟢 Protection is running — USB-Sentinel is actively watching for drives
+        🟢 Protection active — watching USB ports for insertion events
       {% else %}
-        🔴 Protection is not running
-        <button class="start-btn" onclick="startProtection()">▶ Start Protection</button>
+        🔴 USB Protection inactive
+        <button class="start-btn" onclick="startProtection()">▶ Enable Protection</button>
       {% endif %}
     </div>
 
-    <!-- Live Scan Status -->
-    <div class="scan-status" id="scanStatus" style="display:none;"></div>
+    <!-- Live Streaming File Ticker (File by file preview) -->
+    <div class="ticker-box" id="scanTickerBox">
+      <div class="ticker-header">
+        <div class="ticker-title"><div class="ticker-pulse"></div> Live File Stream Scanner</div>
+        <div id="tickerCount" style="font-size:12px;color:var(--muted);font-weight:600;"></div>
+      </div>
+      <div class="ticker-file" id="tickerFile">
+        <span class="icon">📄</span> <span id="tickerFileName">Initializing scan...</span>
+      </div>
+    </div>
 
     <!-- ==================== OVERVIEW ==================== -->
     {% if data %}
@@ -323,7 +283,7 @@
     {% set wasted = data.wasted_bytes | default(0) %}
     {% set du = data.disk_usage %}
     {% set pct_used = du.percent_used if du else 0 %}
-    {% set ring_color = 'var(--red)' if pct_used > 90 else ('var(--amber)' if pct_used > 70 else 'var(--blue)') %}
+    {% set ring_color = 'var(--red)' if pct_used > 90 else ('var(--amber)' if pct_used > 70 else 'var(--cyan)') %}
 
     <section id="overview" class="panel">
       <h2>▣ Overview</h2>
@@ -338,7 +298,7 @@
           <div class="stat"><div class="num">{{ data.total_files }}</div><div class="lbl">Total Files</div></div>
           <div class="stat"><div class="num">{{ data.total_size_readable }}</div><div class="lbl">Scanned Size</div></div>
           <div class="stat"><div class="num">{{ du.free_readable if du else '—' }}</div><div class="lbl">Free Space</div></div>
-          <div class="stat"><div class="num {% if data.duplicate_copies > 0 %}amber{% endif %}">{{ data.duplicate_copies }}</div><div class="lbl">Duplicate copies · {{ data.wasted_space_readable }} wasted</div></div>
+          <div class="stat"><div class="num {% if data.duplicate_copies > 0 %}amber{% endif %}">{{ data.duplicate_copies }}</div><div class="lbl">Duplicate Copies · {{ data.wasted_space_readable }} wasted</div></div>
           <div class="stat"><div class="num">{{ data.total_folders_scanned }}</div><div class="lbl">Folders</div></div>
         </div>
       </div>
@@ -351,26 +311,33 @@
       </div>
       {% endif %}
     </section>
+    {% else %}
+    <section id="overview" class="panel">
+      <div class="empty-note" style="padding:20px;text-align:center;">
+        <h3 style="color:#FFF;margin-bottom:6px;">USB-Sentinel Security Console</h3>
+        <p>No drive snapshot active. Insert a USB drive or enter a path below to run a real-time scan.</p>
+      </div>
+    </section>
     {% endif %}
 
-    <!-- ==================== LIVE CONNECTED DRIVES ==================== -->
+    <!-- ==================== CONNECTED DRIVES ==================== -->
     <section id="live-drives" class="panel">
       <h2>💾 Connected Drives <span class="count-sub" id="driveCount"></span></h2>
       <div class="scan-input-row">
         <input type="text" id="customScanPath" placeholder="Enter drive path (e.g. F:\)">
-        <button class="scan-btn" onclick="startFileScan()" id="fileScanBtn">📊 Scan Files</button>
-        <button class="scan-btn virus" onclick="startVirusScan()" id="virusScanBtn">🛡️ Virus Scan</button>
+        <button class="scan-btn" onclick="startFileScan()" id="fileScanBtn">📊 Scan Drive Files</button>
+        <button class="scan-btn sec" onclick="startSecurityScan()" id="secScanBtn">⚡ Heuristic Security Scan</button>
       </div>
       <div id="liveDrivesList">
-        <div class="empty-note"><span class="spinner"></span> Loading connected drives...</div>
+        <div class="empty-note"><span class="spinner"></span> Detecting connected drives...</div>
       </div>
     </section>
 
     <!-- ==================== SCAN MONITOR ==================== -->
     <section id="scan-monitor" class="panel">
-      <h2>🔍 Live Scan Monitor</h2>
+      <h2>🔍 Live Scan Progress</h2>
       <div id="scanMonitorContent">
-        <div class="empty-note">No scans running. Use the buttons above to start a scan.</div>
+        <div class="empty-note">No active background scans. Use the buttons above to analyze a drive.</div>
       </div>
     </section>
 
@@ -400,7 +367,7 @@
     <section id="files" class="panel">
       <h2>🗂 All Files</h2>
       <div class="controls">
-        <input type="text" id="searchBox" placeholder="Search by filename or extension...">
+        <input type="text" id="searchBox" placeholder="Filter by file name or extension...">
         <button class="filter-btn active" data-cat="all">All</button>
         {% for cat in data.category_summary.keys() %}
         <button class="filter-btn" data-cat="{{ cat }}">{{ cat }}</button>
@@ -410,17 +377,16 @@
 
       <div class="file-head">
         <span></span>
-        <button class="sort-head" data-key="name">Name<span class="arrow"></span></button>
+        <button class="sort-head" data-key="name">Name</button>
         <span>Category</span><span>Ext</span>
-        <button class="sort-head" data-key="size">Size<span class="arrow"></span></button>
+        <button class="sort-head" data-key="size">Size</button>
         <span>Folder</span>
       </div>
 
       <div id="fileList">
         {% for folder in data.folders %}
           {% for file in folder.files %}
-            {% set has_detail = file.zip_preview or file.exe_metadata %}
-            <details class="file-row {{ '' if has_detail else 'no-detail' }}" data-category="{{ file.category }}" data-name="{{ file.name|lower }} {{ file.extension|lower }}" data-size="{{ file.size_bytes }}">
+            <details class="file-row no-detail" data-category="{{ file.category }}" data-name="{{ file.name|lower }} {{ file.extension|lower }}" data-size="{{ file.size_bytes }}">
               <summary>
                 <span class="chev">▸</span>
                 <span class="f-name">{{ file.icon }} {{ file.name }}</span>
@@ -429,27 +395,6 @@
                 <span class="f-size">{{ file.size_readable }}</span>
                 <span class="f-folder">{{ folder.path }}</span>
               </summary>
-              {% if has_detail %}
-              <div class="f-detail">
-                {% if file.zip_preview %}
-                  {% if file.zip_preview.entries is defined %}
-                    <div class="row">📦 Contains {{ file.zip_preview.total_entries }} item(s){% if file.zip_preview.total_entries > file.zip_preview.shown_entries %} (showing first {{ file.zip_preview.shown_entries }}){% endif %}:</div>
-                    {% for entry in file.zip_preview.entries %}<div class="row mono">&nbsp;&nbsp;- {{ entry.name }} ({{ entry.size_readable }})</div>{% endfor %}
-                  {% else %}
-                    <div class="row">⚠️ {{ file.zip_preview.error }}</div>
-                  {% endif %}
-                {% endif %}
-                {% if file.exe_metadata %}
-                  {% if file.exe_metadata.publisher is defined %}
-                    <div class="row">⚙️ Publisher: {{ file.exe_metadata.publisher }}</div>
-                    <div class="row">Product: {{ file.exe_metadata.product_name }} · Version: {{ file.exe_metadata.version }}</div>
-                    <div class="row">Digitally signed: <span class="{{ 'sig-yes' if file.exe_metadata.digitally_signed else 'sig-no' }}">{{ 'Yes' if file.exe_metadata.digitally_signed else 'Not verified' }}</span></div>
-                  {% else %}
-                    <div class="row">⚠️ {{ file.exe_metadata.error }}</div>
-                  {% endif %}
-                {% endif %}
-              </div>
-              {% endif %}
             </details>
           {% endfor %}
         {% endfor %}
@@ -458,26 +403,28 @@
 
     <!-- ==================== DUPLICATES ==================== -->
     <section id="duplicates" class="panel">
-      <h2>⧉ Duplicate Files <span class="count-sub">({{ data.duplicates|length }} groups)</span></h2>
+      <h2>⧉ Duplicate Files <span class="count-sub">({{ data.duplicates|length }} verified groups)</span></h2>
       {% if data.duplicates %}
         {% for dup in data.duplicates %}
         <details class="dupgroup">
           <summary>
-            <span><span class="chev">▸</span>{{ dup.count }}× copies · {{ dup.size_each_readable }} each</span>
+            <span><span class="chev">▸</span>{{ dup.count }}× copies · {{ dup.size_each_readable }} each
+            {% if dup.sha256 %}<span class="hash-badge">sha256: {{ dup.sha256 }}...</span>{% endif %}
+            </span>
             <span class="waste">wasting {{ dup.wasted_space_readable }}</span>
           </summary>
           <div class="dup-body">
             <div class="dup-file">
               <span class="tag tag-orig">ORIGINAL</span>
               <span>{{ dup.original.icon }} {{ dup.original.name }}</span>
-              <span class="dup-folder mono">{{ dup.original.folder }}</span>
+              <span class="mono" style="color:var(--muted);font-size:11px;">{{ dup.original.folder }}</span>
               <span class="mono">{{ dup.original.size_readable }}</span>
             </div>
             {% for c in dup.copies %}
             <div class="dup-file">
               <span class="tag tag-copy">COPY</span>
               <span>{{ c.icon }} {{ c.name }}</span>
-              <span class="dup-folder mono">{{ c.folder }}</span>
+              <span class="mono" style="color:var(--muted);font-size:11px;">{{ c.folder }}</span>
               <span class="mono">{{ c.size_readable }}</span>
             </div>
             {% endfor %}
@@ -485,95 +432,8 @@
         </details>
         {% endfor %}
       {% else %}
-        <div class="empty-note">No duplicate files found — every file on this drive is unique.</div>
+        <div class="empty-note">No duplicate files found — every file on this drive has unique content.</div>
       {% endif %}
-    </section>
-
-    <!-- ==================== LARGEST FILES ==================== -->
-    <section id="largest" class="panel">
-      <h2>📶 Largest Files</h2>
-      <div class="controls-row">
-        <div class="btn-group">
-          <button class="count-btn active" data-count="10">Top 10</button>
-          <button class="count-btn" data-count="25">Top 25</button>
-          <button class="count-btn" data-count="50">Top 50</button>
-          <button class="count-btn" data-count="all">All</button>
-        </div>
-        <button class="filter-btn" id="sortToggle">Largest → Smallest</button>
-      </div>
-      {% if data.largest_files %}
-        {% set max_size = data.largest_files[0].size_bytes %}
-        <div id="largestList">
-          {% for f in data.largest_files %}
-          <div class="rank-row" data-size="{{ f.size_bytes }}">
-            <div class="rank-num">{{ loop.index }}</div>
-            <div>
-              <div class="rank-path">{{ f.icon }} {{ f.name }}</div>
-              <div class="rank-folder">{{ f.folder }}</div>
-              <div class="rank-bar-bg"><div class="rank-bar" style="width:{{ (f.size_bytes / max_size * 100) if max_size else 0 }}%;"></div></div>
-            </div>
-            <div class="rank-size">{{ f.size_readable }}</div>
-          </div>
-          {% endfor %}
-        </div>
-      {% else %}
-        <div class="empty-note">No files found.</div>
-      {% endif %}
-    </section>
-
-    <!-- ==================== CHANGES ==================== -->
-    <section id="changes" class="panel">
-      <h2>↺ Changes Since Last Scan</h2>
-      {% if data.changes %}
-        <div class="panel-sub">Compared to scan on {{ data.changes.previous_scan_date[:19] }}</div>
-        {% set groups = [('added','Added','add','+'), ('modified','Modified','mod','~'), ('removed','Removed','rem','−')] %}
-        {% for key, label, cls, sign in groups %}
-          {% set items = data.changes[key] %}
-          <details class="change-group">
-            <summary class="{{ cls }}"><span class="chev">▸</span>{{ sign }} {{ items|length }} {{ label }}</summary>
-            {% if items %}
-              {% for it in items %}
-              <div class="change-item">
-                <span>{{ it.icon }}</span>
-                <span>{{ it.name }}</span>
-                <span class="ci-folder">{{ it.folder }}</span>
-                <span class="ci-size">{% if key == 'modified' %}{{ it.old_size_readable }} → {{ it.new_size_readable }}{% else %}{{ it.size_readable }}{% endif %}</span>
-              </div>
-              {% endfor %}
-            {% else %}
-              <div class="empty-note" style="padding:10px 15px;">No files {{ label|lower }}.</div>
-            {% endif %}
-          </details>
-        {% endfor %}
-      {% else %}
-        <div class="empty-note">This is the first scan of this drive/folder — rescan it later to see what changed.</div>
-      {% endif %}
-    </section>
-
-    {% else %}
-    <!-- No data state -->
-    <section id="overview" class="panel">
-      <div class="empty-state" style="padding:40px 20px;">
-        <h2>Welcome to USB-Sentinel</h2>
-        <p>No scan data yet. Connect a USB drive and use the controls below to scan it, or enter a drive path manually.</p>
-      </div>
-    </section>
-    <section id="live-drives" class="panel">
-      <h2>💾 Connected Drives <span class="count-sub" id="driveCount"></span></h2>
-      <div class="scan-input-row">
-        <input type="text" id="customScanPath" placeholder="Enter drive path (e.g. F:\)">
-        <button class="scan-btn" onclick="startFileScan()" id="fileScanBtn">📊 Scan Files</button>
-        <button class="scan-btn virus" onclick="startVirusScan()" id="virusScanBtn">🛡️ Virus Scan</button>
-      </div>
-      <div id="liveDrivesList">
-        <div class="empty-note"><span class="spinner"></span> Loading connected drives...</div>
-      </div>
-    </section>
-    <section id="scan-monitor" class="panel">
-      <h2>🔍 Live Scan Monitor</h2>
-      <div id="scanMonitorContent">
-        <div class="empty-note">No scans running. Use the buttons above to start a scan.</div>
-      </div>
     </section>
     {% endif %}
 
@@ -581,15 +441,7 @@
     <section id="activity" class="panel">
       <h2>📋 Activity Log <span class="count-sub" id="activityCount"></span></h2>
       <div id="activityList">
-        <div class="empty-note"><span class="spinner"></span> Loading...</div>
-      </div>
-    </section>
-
-    <!-- ==================== SCAN HISTORY ==================== -->
-    <section id="history" class="panel">
-      <h2>🕐 Scan History <span class="count-sub" id="historyCount"></span></h2>
-      <div id="scanHistoryList">
-        <div class="empty-note"><span class="spinner"></span> Loading...</div>
+        <div class="empty-note"><span class="spinner"></span> Loading activity...</div>
       </div>
     </section>
 
@@ -600,8 +452,7 @@
 <button class="back-to-top" id="backToTop" aria-label="Back to top">↑</button>
 
 <script>
-// ==================== Toast System ====================
-function showToast(msg, type='info', duration=4000){
+function showToast(msg, type='info', duration=3500){
   const c = document.getElementById('toastContainer');
   const t = document.createElement('div');
   t.className = `toast ${type}`;
@@ -610,16 +461,14 @@ function showToast(msg, type='info', duration=4000){
   setTimeout(() => { t.style.opacity='0'; t.style.transform='translateY(10px)'; setTimeout(()=>t.remove(),300); }, duration);
 }
 
-// ==================== Protection ====================
 async function startProtection(){
   try {
     const res = await fetch('/api/protection/start', {method:'POST'});
     const d = await res.json();
-    if(d.ok) showToast('🟢 Protection started!','success');
+    if(d.ok) showToast('🟢 USB Protection enabled!','success');
   } catch(e){ showToast('❌ Failed to start protection','error'); }
 }
 
-// ==================== Live Drives ====================
 async function loadLiveDrives(){
   try {
     const res = await fetch('/api/drives/live');
@@ -628,7 +477,7 @@ async function loadLiveDrives(){
     const countEl = document.getElementById('driveCount');
 
     if(!d.drives || d.drives.length === 0){
-      el.innerHTML = '<div class="empty-note">No removable drives detected. Insert a USB drive to see it here.</div>';
+      el.innerHTML = '<div class="empty-note">No removable USB drives connected right now.</div>';
       if(countEl) countEl.textContent = '(0 connected)';
       return;
     }
@@ -652,17 +501,17 @@ async function loadLiveDrives(){
         <div class="drive-actions">
           ${trustBtn}
           <button class="action-btn scan" onclick="scanDrive('${dr.mountpoint.replace(/\\/g,'\\\\\\\\')}')">Scan</button>
-          <button class="action-btn eject" onclick="ejectDrive('${dr.device.replace(/\\/g,'\\\\\\\\')}')">⏏ Eject</button>
+          <button class="action-btn eject" onclick="ejectDrive('${dr.device.replace(/\\/g,'\\\\\\\\')}')">⏏ Block & Eject</button>
         </div>
       </div>`;
     }).join('');
-  } catch(e){ console.error('Drive load error:', e); }
+  } catch(e){}
 }
 
 async function toggleTrust(serial, trust){
   try {
     await fetch('/api/drives/trust', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({serial,trust})});
-    showToast(trust ? '✅ Drive trusted' : '⚠️ Drive untrusted', trust?'success':'info');
+    showToast(trust ? '✅ Drive marked as Trusted' : '⚠️ Drive untrusted', trust?'success':'info');
     loadLiveDrives();
   } catch(e){ showToast('❌ Failed','error'); }
 }
@@ -670,7 +519,7 @@ async function toggleTrust(serial, trust){
 async function ejectDrive(letter){
   try {
     await fetch('/api/drives/eject', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({drive_letter:letter})});
-    showToast('⏏ Drive ejected','success');
+    showToast('⏏ Drive safely ejected from machine','success');
     setTimeout(loadLiveDrives, 1000);
   } catch(e){ showToast('❌ Eject failed','error'); }
 }
@@ -681,7 +530,6 @@ function scanDrive(path){
   startFileScan();
 }
 
-// ==================== Scans ====================
 function getScanPath(){
   const input = document.getElementById('customScanPath');
   return input ? input.value.trim() : '';
@@ -690,137 +538,92 @@ function getScanPath(){
 async function startFileScan(){
   const path = getScanPath();
   if(!path){ showToast('⚠️ Enter a drive path first','error'); return; }
-  const btn = document.getElementById('fileScanBtn');
-  if(btn) btn.disabled = true;
   try {
     const res = await fetch('/api/scan/drive', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({drive_path:path})});
     const d = await res.json();
-    if(d.error){ showToast(`❌ ${d.error}`,'error'); if(btn) btn.disabled=false; return; }
-    showToast(`🔍 File scan started for ${path}`,'info');
-  } catch(e){ showToast('❌ Failed to start scan','error'); if(btn) btn.disabled=false; }
+    if(d.error){ showToast(`❌ ${d.error}`,'error'); return; }
+    showToast(`🔍 Drive scan started for ${path}`,'info');
+  } catch(e){ showToast('❌ Failed to start scan','error'); }
 }
 
-async function startVirusScan(){
+async function startSecurityScan(){
   const path = getScanPath();
   if(!path){ showToast('⚠️ Enter a drive path first','error'); return; }
-  const btn = document.getElementById('virusScanBtn');
-  if(btn) btn.disabled = true;
   try {
     const res = await fetch('/api/scan/virus', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({drive_path:path})});
     const d = await res.json();
-    if(d.error){ showToast(`❌ ${d.error}`,'error'); if(btn) btn.disabled=false; return; }
-    showToast(`🛡️ Virus scan started for ${path}`,'info');
-  } catch(e){ showToast('❌ Failed to start scan','error'); if(btn) btn.disabled=false; }
+    if(d.error){ showToast(`❌ ${d.error}`,'error'); return; }
+    showToast(`⚡ Heuristic security scan started for ${path}`,'info');
+  } catch(e){ showToast('❌ Failed to start security scan','error'); }
 }
 
-// ==================== Scan Monitor ====================
+// ==================== Live Scan Ticker & Progress ====================
 async function pollScanProgress(){
   try {
     const res = await fetch('/api/scan/progress');
     const d = await res.json();
     const el = document.getElementById('scanMonitorContent');
+    const tickerBox = document.getElementById('scanTickerBox');
+    const tickerFileName = document.getElementById('tickerFileName');
+    const tickerCount = document.getElementById('tickerCount');
+
     const scans = d.scans || {};
     const keys = Object.keys(scans);
 
+    let activeScanFound = false;
+
     if(keys.length === 0){
-      el.innerHTML = '<div class="empty-note">No scans running. Use the buttons above to start a scan.</div>';
-      // Re-enable buttons
-      const fb = document.getElementById('fileScanBtn'); if(fb) fb.disabled = false;
-      const vb = document.getElementById('virusScanBtn'); if(vb) vb.disabled = false;
+      el.innerHTML = '<div class="empty-note">No active background scans. Use the buttons above to analyze a drive.</div>';
+      tickerBox.style.display = 'none';
       return;
     }
 
     let html = '';
-    let anyActive = false;
     keys.forEach(key => {
       const s = scans[key];
-      const isActive = s.active;
-      if(isActive) anyActive = true;
-
-      if(s.type === 'file_scan'){
-        const progress = isActive ? '<div class="scan-progress-fill indeterminate" style="width:30%;"></div>' : '<div class="scan-progress-fill" style="width:100%;"></div>';
-        const statusText = isActive
-          ? `Scanning <b>${s.drive_path}</b> — ${s.files_scanned} files found in ${s.folders_scanned} folders`
-          : (s.result && s.result.error ? `❌ ${s.result.error}` : `✅ Scan complete — ${s.result?.total_files||0} files, ${s.result?.total_size_readable||''}`);
-        const currentFolder = isActive && s.current_folder ? `<div class="scan-current-file">📁 ${s.current_folder}</div>` : '';
-
-        html += `<div class="scan-monitor ${isActive?'active':''}">
-          <div class="scan-header"><span class="scan-title">📊 File Scan</span><span style="color:var(--muted);font-size:12px;">${s.started_at?.substring(11,19)||''}</span></div>
-          <div class="scan-progress-bar">${progress}</div>
-          <div class="scan-stats">${statusText}</div>
-          ${currentFolder}
-        </div>`;
-      } else if(s.type === 'virus_scan'){
-        // Use the DB-stored status
-        html += renderVirusScanMonitor(s);
+      if(s.active){
+        activeScanFound = true;
+        // Show live streaming file ticker box
+        tickerBox.style.display = 'block';
+        tickerCount.textContent = `${s.files_scanned||0} files processed`;
+        const currentFile = s.current_file || s.current_folder || 'Scanning files...';
+        tickerFileName.textContent = `Scanning ${currentFile}`;
       }
+
+      const progress = s.active ? '<div class="scan-progress-fill indeterminate"></div>' : '<div class="scan-progress-fill" style="width:100%;"></div>';
+      const statusText = s.active
+        ? `Analyzing <b>${s.drive_path}</b> — ${s.files_scanned||0} files checked`
+        : (s.result?.error ? `❌ ${s.result.error}` : `✅ Complete — ${s.result?.total_files||s.result?.files_scanned||0} files analyzed`);
+
+      html += `<div class="scan-monitor ${s.active?'active':''}">
+        <div class="scan-header"><span class="scan-title">${s.type==='file_scan'?'📊 Drive Analysis':'⚡ Heuristic Security'}</span></div>
+        <div class="scan-progress-bar">${progress}</div>
+        <div class="scan-stats">${statusText}</div>
+      </div>`;
     });
 
-    // Also check virus scan status from DB
-    try {
-      const statusRes = await fetch('/api/status');
-      const statusData = await statusRes.json();
-      if(statusData.scan && statusData.scan.active && !keys.some(k=>scans[k].type==='virus_scan' && scans[k].active)){
-        html += renderVirusScanFromStatus(statusData.scan);
-        anyActive = true;
-      }
-    } catch(e){}
-
-    if(!anyActive){
-      const fb = document.getElementById('fileScanBtn'); if(fb) fb.disabled = false;
-      const vb = document.getElementById('virusScanBtn'); if(vb) vb.disabled = false;
+    if(!activeScanFound){
+      tickerBox.style.display = 'none';
     }
 
-    el.innerHTML = html || '<div class="empty-note">No scans running.</div>';
-  } catch(e){ console.error('Scan poll error:', e); }
+    el.innerHTML = html;
+  } catch(e){}
 }
 
-function renderVirusScanMonitor(s){
-  const isActive = s.active;
-  const progress = isActive ? '<div class="scan-progress-fill indeterminate" style="width:30%;"></div>' : '<div class="scan-progress-fill" style="width:100%;"></div>';
-  let statusText = '';
-  if(isActive){
-    statusText = `Scanning <b>${s.drive_path}</b>`;
-  } else if(s.result){
-    if(s.result.error) statusText = `❌ ${s.result.error}`;
-    else if(s.result.clean) statusText = `✅ No threats found — ${s.result.files_scanned} files scanned (${s.result.time_taken_seconds}s)`;
-    else statusText = `⚠️ <span style="color:var(--red);">${s.result.infected_count} threat(s) found!</span>`;
-  }
-  return `<div class="scan-monitor ${isActive?'active':''}">
-    <div class="scan-header"><span class="scan-title">🛡️ Virus Scan</span><span style="color:var(--muted);font-size:12px;">${s.started_at?.substring(11,19)||''}</span></div>
-    <div class="scan-progress-bar">${progress}</div>
-    <div class="scan-stats">${statusText}</div>
-  </div>`;
-}
-
-function renderVirusScanFromStatus(s){
-  return `<div class="scan-monitor active">
-    <div class="scan-header"><span class="scan-title">🛡️ Virus Scan</span></div>
-    <div class="scan-progress-bar"><div class="scan-progress-fill indeterminate" style="width:30%;"></div></div>
-    <div class="scan-stats">Scanning <b>${s.drive}</b> — ${s.files_scanned} files checked (${s.elapsed_seconds}s)</div>
-    ${s.current_file ? `<div class="scan-current-file">${s.current_file}</div>` : ''}
-  </div>`;
-}
-
-// ==================== Activity Log ====================
 async function loadActivity(){
   try {
-    const res = await fetch('/api/activity?limit=50');
+    const res = await fetch('/api/activity?limit=30');
     const d = await res.json();
     const el = document.getElementById('activityList');
-    const countEl = document.getElementById('activityCount');
     if(!d.log || d.log.length === 0){
-      el.innerHTML = '<div class="empty-note">No activity recorded yet. Events will appear here as you use USB-Sentinel.</div>';
-      if(countEl) countEl.textContent = '';
+      el.innerHTML = '<div class="empty-note">No recent activity.</div>';
       return;
     }
-    if(countEl) countEl.textContent = `(${d.log.length} events)`;
 
     el.innerHTML = d.log.map(ev => {
       const dotClass = ev.event_type.includes('insert') || ev.event_type.includes('trust') ? 'insert'
         : ev.event_type.includes('scan') ? 'scan'
         : ev.event_type.includes('threat') ? 'threat'
-        : ev.event_type.includes('setting') ? 'settings'
         : 'default';
       const time = ev.timestamp ? ev.timestamp.substring(11,19) : '';
       return `<div class="activity-item">
@@ -829,47 +632,9 @@ async function loadActivity(){
         <div class="activity-msg">${ev.message}</div>
       </div>`;
     }).join('');
-  } catch(e){ console.error('Activity load error:', e); }
+  } catch(e){}
 }
 
-// ==================== Scan History ====================
-async function loadScanHistory(){
-  try {
-    const res = await fetch('/api/scan/history');
-    const d = await res.json();
-    const el = document.getElementById('scanHistoryList');
-    const countEl = document.getElementById('historyCount');
-    if(!d.history || d.history.length === 0){
-      el.innerHTML = '<div class="empty-note">No scans performed yet.</div>';
-      if(countEl) countEl.textContent = '';
-      return;
-    }
-    if(countEl) countEl.textContent = `(${d.history.length} scans)`;
-
-    const headHtml = `<div class="history-row history-head"><span>Type</span><span>Path</span><span>Started</span><span>Files</span><span>Issues</span><span>Status</span></div>`;
-
-    el.innerHTML = headHtml + d.history.map(h => {
-      const typeLabel = h.scan_type === 'virus_scan' ? '🛡️ Virus' : '📊 Files';
-      const badge = h.status === 'complete' ? '<span class="history-badge complete">Complete</span>'
-        : h.status === 'running' ? '<span class="history-badge running">Running</span>'
-        : '<span class="history-badge error">Error</span>';
-      const issues = h.infected_count > 0 ? `<span style="color:var(--red);">${h.infected_count} threats</span>`
-        : h.duplicate_groups > 0 ? `${h.duplicate_groups} dup groups` : '—';
-      const started = h.started_at ? h.started_at.substring(5,16).replace('T',' ') : '';
-
-      return `<div class="history-row">
-        <span>${typeLabel}</span>
-        <span class="mono" style="font-size:11.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${h.drive_path}</span>
-        <span style="font-size:12px;color:var(--muted);">${started}</span>
-        <span>${h.files_scanned}</span>
-        <span>${issues}</span>
-        <span>${badge}</span>
-      </div>`;
-    }).join('');
-  } catch(e){ console.error('History load error:', e); }
-}
-
-// ==================== Status Polling ====================
 async function pollStatus(){
   try {
     const res = await fetch('/api/status');
@@ -877,31 +642,15 @@ async function pollStatus(){
     const bar = document.getElementById('statusBar');
     if(d.protection.active){
       bar.className = 'status-bar on';
-      bar.innerHTML = '🟢 Protection is running — USB-Sentinel is actively watching for drives';
+      bar.innerHTML = '🟢 Protection active — watching USB ports for insertion events';
     } else {
       bar.className = 'status-bar off';
-      bar.innerHTML = '🔴 Protection is not running <button class="start-btn" onclick="startProtection()">▶ Start Protection</button>';
+      bar.innerHTML = '🔴 USB Protection inactive <button class="start-btn" onclick="startProtection()">▶ Enable Protection</button>';
     }
-
-    // Legacy virus scan status display
-    const scanBox = document.getElementById('scanStatus');
-    if(d.scan && d.scan.active){
-      scanBox.style.display = 'block';
-      scanBox.innerHTML = `🔍 Scanning <b>${d.scan.drive}</b> — ${d.scan.files_scanned} files checked (${d.scan.elapsed_seconds}s elapsed)` +
-        (d.scan.current_file ? `<span class="scan-file">${d.scan.current_file}</span>` : '');
-    } else if(d.scan && d.scan.result){
-      scanBox.style.display = 'block';
-      const r = d.scan.result;
-      if(r.error){ scanBox.innerHTML = `⚠️ Last scan of <b>${d.scan.drive}</b>: ${r.error}`; }
-      else if(r.clean){ scanBox.innerHTML = `✅ Last scan of <b>${d.scan.drive}</b> complete — no threats found (${r.files_scanned} files, ${r.time_taken_seconds}s)`; }
-      else { scanBox.innerHTML = `⚠️ Last scan of <b>${d.scan.drive}</b> found ${r.infected_count} threat(s)`; }
-    } else {
-      scanBox.style.display = 'none';
-    }
-  } catch(e) {}
+  } catch(e){}
 }
 
-// ==================== File Search & Filter ====================
+// File Search & Filter
 {% if data %}
 const searchBox = document.getElementById("searchBox");
 const filterBtns = document.querySelectorAll(".controls .filter-btn");
@@ -931,91 +680,21 @@ filterBtns.forEach(btn => {
   });
 });
 applyFilters();
-
-// Sortable headers
-let fileSortAsc = true;
-document.querySelectorAll(".sort-head").forEach(head => {
-  head.addEventListener("click", () => {
-    const key = head.dataset.key;
-    const list = document.getElementById("fileList");
-    const items = Array.from(list.querySelectorAll(".file-row"));
-    fileSortAsc = !fileSortAsc;
-    items.sort((a, b) => {
-      let av, bv;
-      if (key === "size"){ av = +a.dataset.size; bv = +b.dataset.size; }
-      else { av = a.dataset.name; bv = b.dataset.name; }
-      if (av < bv) return fileSortAsc ? -1 : 1;
-      if (av > bv) return fileSortAsc ? 1 : -1;
-      return 0;
-    });
-    items.forEach(item => list.appendChild(item));
-  });
-});
-
-// Largest Files
-(function(){
-  const container = document.getElementById("largestList");
-  if (!container) return;
-  const rows = Array.from(container.querySelectorAll(".rank-row"));
-  const countBtns = document.querySelectorAll(".count-btn");
-  const sortBtn = document.getElementById("sortToggle");
-  let sortDesc = true;
-  let showCount = 10;
-  function render(){
-    const sorted = rows.slice().sort((a, b) => {
-      const av = +a.dataset.size, bv = +b.dataset.size;
-      return sortDesc ? bv - av : av - bv;
-    });
-    sorted.forEach((row, i) => {
-      container.appendChild(row);
-      row.querySelector(".rank-num").textContent = i + 1;
-      row.style.display = (showCount === "all" || i < showCount) ? "" : "none";
-    });
-  }
-  countBtns.forEach(btn => btn.addEventListener("click", () => {
-    countBtns.forEach(b => b.classList.remove("active"));
-    btn.classList.add("active");
-    showCount = btn.dataset.count === "all" ? "all" : parseInt(btn.dataset.count, 10);
-    render();
-  }));
-  sortBtn.addEventListener("click", () => {
-    sortDesc = !sortDesc;
-    sortBtn.textContent = sortDesc ? "Largest → Smallest" : "Smallest → Largest";
-    render();
-  });
-  render();
-})();
 {% endif %}
 
-// ==================== Scrollspy ====================
-const navLinks = document.querySelectorAll(".nav-link[href^='#']");
-const sections = [...navLinks].map(l => document.querySelector(l.getAttribute("href"))).filter(Boolean);
-const observer = new IntersectionObserver((entries) => {
-  entries.forEach(entry => {
-    if (entry.isIntersecting){
-      const id = "#" + entry.target.id;
-      navLinks.forEach(l => l.classList.toggle("active", l.getAttribute("href") === id));
-    }
-  });
-}, { rootMargin: "-20% 0px -70% 0px" });
-sections.forEach(s => observer.observe(s));
+// Init
+loadLiveDrives();
+loadActivity();
+pollStatus();
+pollScanProgress();
+setInterval(pollScanProgress, 250);  // High-frequency polling for smooth file streaming
+setInterval(loadLiveDrives, 4000);
+setInterval(loadActivity, 6000);
+setInterval(pollStatus, 3000);
 
-// Back to top
 const backToTop = document.getElementById("backToTop");
 window.addEventListener("scroll", () => backToTop.classList.toggle("visible", window.scrollY > 400));
 backToTop.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
-
-// ==================== Init & Polling ====================
-loadLiveDrives();
-loadActivity();
-loadScanHistory();
-pollStatus();
-pollScanProgress();
-setInterval(pollStatus, 3000);
-setInterval(pollScanProgress, 2000);
-setInterval(loadLiveDrives, 5000);
-setInterval(loadActivity, 8000);
-setInterval(loadScanHistory, 10000);
 </script>
 
 </body>

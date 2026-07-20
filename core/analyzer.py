@@ -3,6 +3,7 @@ import sys
 import json
 import hashlib
 import shutil
+import time
 from datetime import datetime
 
 # Ensure core/ is on the import path regardless of where the script is launched from
@@ -127,11 +128,11 @@ def get_disk_usage(path):
         return None
 
 
-# ---- Live scan status callback support ----
+# ---- Live scan progress callback support ----
 _scan_progress_callback = None
 
 def set_scan_progress_callback(callback):
-    """Set a callback function(files_scanned, total_folders, current_folder) for live progress."""
+    """Set a callback function(files_scanned, total_folders, current_file, current_folder) for live streaming ticker."""
     global _scan_progress_callback
     _scan_progress_callback = callback
 
@@ -143,16 +144,10 @@ def scan_drive_full(drive_path):
     total_folders_scanned = 0
     total_size = 0
     category_summary = {}
+    last_callback_time = 0
 
     for root, dirs, files in os.walk(drive_path):
         total_folders_scanned += 1
-
-        # Report progress via callback
-        if _scan_progress_callback:
-            try:
-                _scan_progress_callback(total_files, total_folders_scanned, root)
-            except Exception:
-                pass
 
         if not files:
             continue
@@ -189,6 +184,15 @@ def scan_drive_full(drive_path):
 
             total_files += 1
             total_size += size
+
+            # Real-time streaming callback: update current file being scanned
+            now = time.time()
+            if _scan_progress_callback and (now - last_callback_time >= 0.04):
+                last_callback_time = now
+                try:
+                    _scan_progress_callback(total_files, total_folders_scanned, file, root)
+                except Exception:
+                    pass
 
             if category not in category_summary:
                 category_summary[category] = {"count": 0, "total_size": 0}
@@ -227,36 +231,32 @@ def get_file_hash(file_path, block_size=65536):
 
 
 def find_duplicates(data):
-    """Find duplicate files. Uses size-based pre-filtering for speed —
-    only files sharing the same size are hashed (huge speedup for large drives)."""
+    """
+    Find duplicate files using 2-step verification:
+      Step 1: Group files by exact byte size (filtering out unique file sizes).
+      Step 2: Calculate full SHA-256 cryptographic hashes for remaining candidates.
+      Result includes full SHA-256 hash snippet for proof in UI!
+    """
 
-    # Step 1: Group files by size (only files with matching sizes can be duplicates)
     size_groups = {}
     for folder in data["folders"]:
         for file in folder["files"]:
             size = file["size_bytes"]
             if size == 0:
-                continue  # skip empty files — they're all "duplicates" trivially
-            key = size
-            if key not in size_groups:
-                size_groups[key] = []
-            size_groups[key].append((folder["path"], file))
+                continue  # skip empty 0-byte files
+            if size not in size_groups:
+                size_groups[size] = []
+            size_groups[size].append((folder["path"], file))
 
-    # Step 2: Only hash files where 2+ files share the same size
     hash_map = {}
-    files_hashed = 0
 
     for size, file_list in size_groups.items():
         if len(file_list) < 2:
-            continue  # unique size = unique file, skip hashing
+            continue  # Unique size = unique file content
 
         for folder_path, file in file_list:
             file_path = os.path.join(folder_path, file["name"])
             file_hash = get_file_hash(file_path)
-            files_hashed += 1
-
-            if files_hashed % 200 == 0:
-                print(f"   ... hashed {files_hashed} files so far (checking duplicates)")
 
             if file_hash is None:
                 continue
@@ -279,6 +279,8 @@ def find_duplicates(data):
         if len(files) > 1:
             wasted = files[0]["size_bytes"] * (len(files) - 1)
             duplicates.append({
+                "sha256": file_hash[:16],  # 16-char SHA-256 snippet for UI proof
+                "full_sha256": file_hash,
                 "count": len(files),
                 "size_each_readable": files[0]["size_readable"],
                 "wasted_bytes": wasted,
@@ -410,149 +412,3 @@ def save_full_report_json(data, duplicates, largest_files, changes, disk_usage, 
 
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump(full_report, f, indent=2)
-
-
-def save_text_report(data, duplicates, largest_files, changes, disk_usage, output_path):
-    total_duplicate_copies = sum(d["count"] - 1 for d in duplicates)
-    total_wasted_bytes = sum(d["wasted_bytes"] for d in duplicates)
-    unique_files = data["total_files"] - total_duplicate_copies
-
-    with open(output_path, "w", encoding="utf-8") as f:
-        f.write("USB-Sentinel Scan Report\n")
-        f.write(f"Drive/Folder Scanned: {data['drive_path']}\n")
-        f.write(f"Scan Date: {data['scan_date']}\n")
-        f.write("=" * 70 + "\n")
-        if disk_usage:
-            f.write(f"Drive Capacity: {disk_usage['total_readable']} | Used: {disk_usage['used_readable']} ({disk_usage['percent_used']}%) | Free: {disk_usage['free_readable']}\n")
-        f.write(f"Total Folders Scanned: {data['total_folders_scanned']}\n")
-        f.write(f"Total Files: {data['total_files']}\n")
-        f.write(f"  - Unique files: {unique_files}\n")
-        f.write(f"  - Duplicate copies: {total_duplicate_copies}\n")
-        f.write(f"Total Size Scanned: {data['total_size_readable']}\n")
-        f.write(f"Space wasted by duplicates: {format_size(total_wasted_bytes)}\n")
-        f.write("-" * 70 + "\n\n")
-
-        f.write("Summary by Category:\n")
-        for cat, info in data["category_summary"].items():
-            icon = CATEGORY_ICONS.get(cat, "❓")
-            f.write(f"  {icon} {cat:15} | Files: {info['count']:5} | Size: {info['total_size_readable']}\n")
-
-        f.write("\n" + "=" * 70 + "\n")
-        f.write("Largest Files:\n")
-        f.write("=" * 70 + "\n")
-        for i, file in enumerate(largest_files, 1):
-            f.write(f"  {i}. {file['path']} - {file['size_readable']}\n")
-
-        f.write("\n" + "=" * 70 + "\n")
-        f.write(f"Duplicate Files Found: {len(duplicates)} group(s), {total_duplicate_copies} extra copies, {format_size(total_wasted_bytes)} wasted\n")
-        f.write("=" * 70 + "\n")
-        for dup in duplicates:
-            f.write(f"  {dup['count']}x copies, {dup['size_each_readable']} each, wasting {dup['wasted_space_readable']}\n")
-            f.write(f"      [original] {dup['original']['path']}\n")
-            for c in dup["copies"]:
-                f.write(f"      [copy]     {c['path']}\n")
-
-        f.write("\n" + "=" * 70 + "\n")
-        f.write("Changes Since Last Scan (of this exact drive+folder):\n")
-        f.write("=" * 70 + "\n")
-        if changes is None:
-            f.write("  No previous scan found for this drive+folder — this is the first scan.\n")
-        else:
-            f.write(f"  Compared to scan on: {changes['previous_scan_date']}\n")
-            f.write(f"  Added ({len(changes['added'])}):\n")
-            for p in changes["added"]:
-                f.write(f"      + {p['path']} ({p['size_readable']})\n")
-            f.write(f"  Removed ({len(changes['removed'])}):\n")
-            for p in changes["removed"]:
-                f.write(f"      - {p['path']} ({p['size_readable']})\n")
-            f.write(f"  Modified ({len(changes['modified'])}):\n")
-            for p in changes["modified"]:
-                f.write(f"      ~ {p['path']} ({p['old_size_readable']} -> {p['new_size_readable']})\n")
-
-        f.write("\n" + "=" * 70 + "\n")
-        f.write("Full Folder & File Listing:\n")
-        f.write("=" * 70 + "\n\n")
-
-        for folder in data["folders"]:
-            f.write(f"{FOLDER_ICON} {folder['path']}\n")
-            for file in folder["files"]:
-                f.write(f"    {file['icon']} {file['name']:40} | {file['category']} ({file['extension']}) | {file['size_readable']}\n")
-                if "zip_preview" in file and "entries" in file["zip_preview"]:
-                    f.write(f"        📦 Contains {file['zip_preview']['total_entries']} item(s):\n")
-                    for entry in file["zip_preview"]["entries"]:
-                        f.write(f"           - {entry['name']} ({entry['size_readable']})\n")
-                if "exe_metadata" in file and "publisher" in file["exe_metadata"]:
-                    meta = file["exe_metadata"]
-                    f.write(f"        ⚙️  Publisher: {meta['publisher']} | Product: {meta['product_name']} | Version: {meta['version']} | Signed: {meta['digitally_signed']}\n")
-            f.write("\n")
-
-
-def print_duplicate_details(duplicates):
-    if not duplicates:
-        print("\nNo duplicate files found.")
-        return
-
-    print(f"\nDuplicate File Details ({len(duplicates)} group(s)):")
-    print("-" * 70)
-    for i, dup in enumerate(duplicates, 1):
-        print(f"  Group {i}: {dup['count']}x copies, {dup['size_each_readable']} each, wasting {dup['wasted_space_readable']}")
-        print(f"      [original] {dup['original']['path']}")
-        for c in dup["copies"]:
-            print(f"      [copy]     {c['path']}")
-    print("-" * 70)
-
-
-if __name__ == "__main__":
-    raw_path = input("Enter drive/folder path (example: F:\\ or F:\\WebS): ")
-    path = raw_path.strip()
-
-    if not os.path.isdir(path):
-        print(f"\n❌ Error: '{path}' is not a valid folder/drive path, or the drive isn't connected.")
-        print("Check for typos or extra spaces, make sure the drive is plugged in, then try again.")
-    else:
-        print("Step 1/3: Scanning files and folders...")
-        data = scan_drive_full(path)
-        disk_usage = get_disk_usage(path)
-
-        print("Step 2/3: Checking for duplicate files (this reads every file, may take a while)...")
-        duplicates = find_duplicates(data)
-        largest_files = find_largest_files(data)
-
-        reports_dir = os.path.join(os.path.dirname(__file__), "..", "reports")
-        os.makedirs(reports_dir, exist_ok=True)
-
-        drive_root = os.path.splitdrive(os.path.abspath(path))[0]
-        serial = get_drive_serial(drive_root)
-        snapshot_id = get_snapshot_id(path, serial)
-        snapshot_path = get_snapshot_path(reports_dir, snapshot_id)
-
-        print(f"    Identity for this scan -> Drive Serial: {serial or 'Unknown'} | Snapshot ID: {snapshot_id}")
-
-        print("Step 3/3: Comparing to last scan of this exact drive+folder...")
-        changes = compare_to_previous_scan(data, snapshot_path)
-
-        save_json_report(data, snapshot_path)
-
-        text_path = os.path.join(reports_dir, "last_scan.txt")
-        save_text_report(data, duplicates, largest_files, changes, disk_usage, text_path)
-
-        full_report_path = os.path.join(reports_dir, "last_scan_full.json")
-        save_full_report_json(data, duplicates, largest_files, changes, disk_usage, full_report_path)
-
-        total_duplicate_copies = sum(d["count"] - 1 for d in duplicates)
-        unique_files = data["total_files"] - total_duplicate_copies
-
-        print(f"\nScan complete.")
-        print(f"Total Files: {data['total_files']} (Unique: {unique_files}, Duplicate copies: {total_duplicate_copies})")
-        print(f"Total Size: {data['total_size_readable']}")
-        if disk_usage:
-            print(f"Drive Capacity: {disk_usage['total_readable']} | Used: {disk_usage['used_readable']} ({disk_usage['percent_used']}%) | Free: {disk_usage['free_readable']}")
-
-        print_duplicate_details(duplicates)
-
-        if changes is None:
-            print("\nFirst scan of this drive+folder — no comparison available yet.")
-        else:
-            print(f"\nChanges since last scan: +{len(changes['added'])} added, -{len(changes['removed'])} removed, ~{len(changes['modified'])} modified")
-
-        print(f"\nFull report saved to: {text_path}")

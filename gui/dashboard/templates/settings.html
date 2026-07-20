@@ -4,111 +4,103 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>USB-Sentinel — Settings</title>
-<meta name="description" content="USB-Sentinel settings — manage trusted drives, configure behavior, and customize your security preferences.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  :root{ --bg:#0A0E14; --panel:#121822; --panel-2:#0E141C; --border:#212B38; --ink:#E7ECF3; --muted:#7C879B; --blue:#4FA6E8; --green:#33D6A6; --amber:#F0B94D; --red:#F2645C; --radius:10px; }
+  :root{
+    --bg:#07090E; --panel:#0D111A; --panel-2:#0A0E17; --border:#1E293B;
+    --ink:#F1F5F9; --muted:#64748B; --cyan:#00F0FF; --emerald:#10B981; --amber:#F59E0B; --red:#EF4444; --radius:12px;
+  }
   *{ box-sizing:border-box; }
-  body{ margin:0; background:var(--bg); color:var(--ink); font-family:'Inter',sans-serif; font-size:15px; }
-  h1,h2,h3{ font-family:'Space Grotesk',sans-serif; margin:0; }
+  body{ margin:0; background:var(--bg); color:var(--ink); font-family:'Inter',sans-serif; font-size:14px; line-height:1.5; }
+  h1,h2,h3{ font-family:'Space Grotesk',sans-serif; margin:0; letter-spacing:-0.02em; }
   .mono{ font-family:'JetBrains Mono',monospace; }
   a{ color:inherit; text-decoration:none; }
   button{ font-family:inherit; cursor:pointer; }
-  :focus-visible{ outline:2px solid var(--blue); outline-offset:2px; }
+  :focus-visible{ outline:2px solid var(--cyan); outline-offset:2px; }
 
   .layout{ display:flex; min-height:100vh; }
-  .sidebar{ width:230px; flex-shrink:0; background:var(--panel-2); border-right:1px solid var(--border); padding:20px 16px; position:sticky; top:0; height:100vh; }
-  .brand{ display:block; font-size:16px; font-weight:700; margin-bottom:2px; }
-  .brand span{ color:var(--blue); }
-  .brand-sub{ color:var(--muted); font-size:11px; margin-bottom:22px; }
-  .nav-link{ display:flex; align-items:center; gap:10px; padding:10px; border-radius:7px; color:var(--muted); font-size:13.5px; font-weight:500; margin-bottom:2px; transition:background 0.15s, color 0.15s; }
-  .nav-link:hover{ background:var(--panel); color:var(--ink); }
-  .nav-link.active{ background:rgba(79,166,232,0.14); color:var(--blue); }
+  .sidebar{ width:240px; flex-shrink:0; background:var(--panel-2); border-right:1px solid var(--border); padding:24px 18px; position:sticky; top:0; height:100vh; }
+  .brand{ display:flex; align-items:center; gap:10px; font-size:18px; font-weight:700; color:#FFF; margin-bottom:4px; }
+  .brand-logo{ width:26px; height:26px; border-radius:6px; background:linear-gradient(135deg, var(--cyan), #3B82F6); display:flex; align-items:center; justify-content:center; color:#000; font-size:14px; font-weight:800; }
+  .brand span{ color:var(--cyan); }
+  .brand-sub{ color:var(--muted); font-size:11px; margin-bottom:24px; text-transform:uppercase; letter-spacing:0.8px; font-weight:600; }
+  .nav-link{ display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:8px; color:var(--muted); font-size:13.5px; font-weight:500; margin-bottom:3px; transition:all 0.15s ease; }
+  .nav-link:hover{ background:rgba(255,255,255,0.04); color:var(--ink); }
+  .nav-link.active{ background:rgba(0,240,255,0.08); color:var(--cyan); border:1px solid rgba(0,240,255,0.2); font-weight:600; }
 
-  .main{ flex:1; padding:32px 40px 80px; max-width:900px; }
-  .panel{ background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); padding:24px 26px; margin-bottom:22px; }
-  .panel h2{ font-size:17px; margin-bottom:6px; display:flex; align-items:center; gap:8px; }
+  .main{ flex:1; padding:32px 40px 80px; max-width:920px; }
+  .panel{ background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); padding:24px; margin-bottom:22px; box-shadow:0 4px 20px rgba(0,0,0,0.3); }
+  .panel h2{ font-size:17px; margin-bottom:6px; color:#FFF; display:flex; align-items:center; gap:8px; }
   .panel-sub{ color:var(--muted); font-size:12.5px; margin-bottom:18px; }
 
-  /* STATUS BAR */
-  .status-bar{ display:flex; align-items:center; gap:8px; padding:10px 16px; border-radius:8px; font-size:13px; margin-bottom:20px; border:1px solid var(--border); }
-  .status-bar.on{ background:rgba(51,214,166,0.08); border-color:rgba(51,214,166,0.3); color:var(--green); }
-  .status-bar.off{ background:rgba(242,100,92,0.08); border-color:rgba(242,100,92,0.3); color:var(--red); }
-  .status-bar code{ background:var(--panel-2); padding:2px 7px; border-radius:5px; color:var(--ink); }
+  .status-bar{ display:flex; align-items:center; gap:12px; padding:12px 18px; border-radius:10px; font-size:13.5px; margin-bottom:20px; border:1px solid var(--border); }
+  .status-bar.on{ background:rgba(16,185,129,0.08); border-color:rgba(16,185,129,0.3); color:var(--emerald); }
+  .status-bar.off{ background:rgba(239,68,68,0.08); border-color:rgba(239,68,68,0.3); color:var(--red); }
 
   /* DRIVE TABLE */
-  .drive-row{ display:grid; grid-template-columns:1.2fr 0.5fr 0.6fr 0.7fr 0.9fr 0.9fr 100px; gap:12px; align-items:center; padding:12px 0; border-bottom:1px solid var(--panel-2); font-size:13px; }
+  .drive-row{ display:grid; grid-template-columns:1.2fr 0.5fr 0.6fr 0.7fr 0.9fr 0.9fr 110px; gap:10px; align-items:center; padding:12px 0; border-bottom:1px solid rgba(255,255,255,0.03); font-size:13px; }
   .drive-row:last-child{ border-bottom:none; }
-  .drive-head{ color:var(--muted); font-size:11px; text-transform:uppercase; letter-spacing:0.4px; border-bottom:1px solid var(--border); padding-bottom:8px; }
-  .badge{ padding:3px 9px; border-radius:6px; font-size:11px; font-weight:600; display:inline-block; }
-  .badge-trusted{ background:rgba(51,214,166,0.14); color:var(--green); }
-  .badge-blocked{ background:rgba(242,100,92,0.14); color:var(--red); }
+  .drive-head{ color:var(--muted); font-size:11px; text-transform:uppercase; letter-spacing:0.6px; border-bottom:1px solid var(--border); padding-bottom:8px; font-weight:700; }
+  .badge{ padding:3px 8px; border-radius:5px; font-size:10px; font-weight:700; text-transform:uppercase; display:inline-block; }
+  .badge-trusted{ background:rgba(16,185,129,0.15); color:var(--emerald); border:1px solid rgba(16,185,129,0.3); }
+  .badge-blocked{ background:rgba(239,68,68,0.15); color:var(--red); border:1px solid rgba(239,68,68,0.3); }
 
   .drive-actions{ display:flex; gap:6px; }
-  .trust-btn{ background:var(--panel-2); border:1px solid var(--border); color:var(--green); padding:5px 10px; border-radius:6px; font-size:11px; font-family:inherit; transition:all 0.15s; }
-  .trust-btn:hover{ background:rgba(51,214,166,0.1); border-color:var(--green); }
+  .trust-btn{ background:var(--panel-2); border:1px solid var(--border); color:var(--emerald); padding:4px 9px; border-radius:6px; font-size:11px; font-weight:600; transition:all 0.15s; }
+  .trust-btn:hover{ background:rgba(16,185,129,0.15); border-color:var(--emerald); }
   .trust-btn.untrust{ color:var(--amber); }
-  .trust-btn.untrust:hover{ background:rgba(240,185,77,0.1); border-color:var(--amber); }
-  .forget-btn{ background:var(--panel-2); border:1px solid var(--border); color:var(--red); padding:5px 10px; border-radius:6px; font-size:11px; font-family:inherit; transition:all 0.15s; }
-  .forget-btn:hover{ background:rgba(242,100,92,0.1); border-color:var(--red); }
+  .trust-btn.untrust:hover{ background:rgba(245,158,11,0.15); border-color:var(--amber); }
+  .forget-btn{ background:var(--panel-2); border:1px solid var(--border); color:var(--red); padding:4px 9px; border-radius:6px; font-size:11px; font-weight:600; transition:all 0.15s; }
+  .forget-btn:hover{ background:rgba(239,68,68,0.15); border-color:var(--red); }
   .empty-note{ color:var(--muted); font-size:13px; padding:10px 0; }
 
   /* TOGGLE ROW */
-  .toggle-row{ display:flex; justify-content:space-between; align-items:center; padding:14px 0; border-bottom:1px solid var(--panel-2); }
+  .toggle-row{ display:flex; justify-content:space-between; align-items:center; padding:14px 0; border-bottom:1px solid rgba(255,255,255,0.03); }
   .toggle-row:last-of-type{ border-bottom:none; }
-  .toggle-label{ font-size:14px; font-weight:500; }
+  .toggle-label{ font-size:13.5px; font-weight:600; color:#FFF; }
   .toggle-desc{ color:var(--muted); font-size:12px; margin-top:2px; }
   .switch{ position:relative; width:44px; height:24px; flex-shrink:0; }
   .switch input{ opacity:0; width:0; height:0; }
   .slider{ position:absolute; cursor:pointer; inset:0; background:var(--border); border-radius:24px; transition:0.2s; }
   .slider:before{ content:""; position:absolute; height:18px; width:18px; left:3px; top:3px; background:var(--ink); border-radius:50%; transition:0.2s; }
-  input:checked + .slider{ background:var(--blue); }
-  input:checked + .slider:before{ transform:translateX(20px); }
+  input:checked + .slider{ background:var(--cyan); }
+  input:checked + .slider:before{ transform:translateX(20px); background:#000; }
 
-  /* TEXT INPUT ROW */
-  .input-row{ display:flex; justify-content:space-between; align-items:center; padding:14px 0; border-bottom:1px solid var(--panel-2); gap:16px; }
-  .input-row:last-of-type{ border-bottom:none; }
-  .input-field{ background:var(--panel-2); border:1px solid var(--border); color:var(--ink); padding:8px 12px; border-radius:7px; font-size:13px; font-family:'JetBrains Mono',monospace; width:200px; }
-  .input-field::placeholder{ color:var(--muted); }
+  .save-btn{ background:linear-gradient(135deg, var(--cyan), #3B82F6); color:#000; border:none; padding:10px 22px; border-radius:8px; font-weight:700; cursor:pointer; font-size:13px; margin-top:10px; transition:all 0.15s; box-shadow:0 0 12px rgba(0,240,255,0.25); }
+  .save-btn:hover{ filter:brightness(1.1); transform:translateY(-1px); }
 
-  .save-btn{ background:var(--blue); color:#0A0E14; border:none; padding:10px 20px; border-radius:7px; font-weight:600; cursor:pointer; font-size:13.5px; margin-top:8px; transition:opacity 0.15s; }
-  .save-btn:hover{ opacity:0.85; }
+  .export-btn{ background:var(--panel-2); border:1px solid var(--border); color:var(--ink); padding:8px 16px; border-radius:8px; font-size:12.5px; font-weight:600; transition:all 0.15s; }
+  .export-btn:hover{ border-color:var(--cyan); color:var(--cyan); }
 
-  .export-btn{ background:var(--panel-2); border:1px solid var(--border); color:var(--ink); padding:8px 16px; border-radius:7px; font-size:12.5px; font-weight:500; transition:all 0.15s; }
-  .export-btn:hover{ border-color:var(--blue); color:var(--blue); }
-
-  .flash-msg{ background:rgba(79,166,232,0.1); border:1px solid rgba(79,166,232,0.3); color:var(--blue); padding:10px 16px; border-radius:8px; font-size:13px; margin-bottom:20px; animation:flashIn 0.3s ease; }
-  @keyframes flashIn{ from{opacity:0;transform:translateY(-5px);} to{opacity:1;transform:translateY(0);} }
-
-  /* SECTION DIVIDER */
-  .section-label{ color:var(--muted); font-size:10px; text-transform:uppercase; letter-spacing:0.8px; padding:16px 0 4px; margin-top:4px; }
+  .flash-msg{ background:rgba(0,240,255,0.1); border:1px solid rgba(0,240,255,0.3); color:var(--cyan); padding:10px 16px; border-radius:8px; font-size:13px; margin-bottom:20px; font-weight:500; }
+  .section-label{ color:var(--cyan); font-size:11px; text-transform:uppercase; letter-spacing:0.8px; padding:14px 0 4px; font-weight:700; }
 
   @media (max-width: 800px){
     .layout{ flex-direction:column; }
-    .sidebar{ position:static; width:100%; height:auto; display:flex; gap:6px; overflow-x:auto; padding:14px 16px; }
+    .sidebar{ width:100%; display:flex; gap:6px; overflow-x:auto; padding:14px 16px; }
     .brand, .brand-sub{ display:none; }
     .main{ padding:20px 16px 60px; }
-    .drive-row, .drive-head{ grid-template-columns:1fr 60px 80px; }
-    .drive-row span:nth-child(3), .drive-row span:nth-child(4), .drive-row span:nth-child(5), .drive-row span:nth-child(6){ display:none; }
-    .drive-head span:nth-child(3), .drive-head span:nth-child(4), .drive-head span:nth-child(5), .drive-head span:nth-child(6){ display:none; }
   }
 </style>
 </head>
 <body>
 <div class="layout">
   <nav class="sidebar">
-    <a href="/" class="brand">USB-<span>Sentinel</span></a>
+    <div class="brand">
+      <div class="brand-logo">🛡️</div>
+      USB-<span>Sentinel</span>
+    </div>
     <div class="brand-sub">Settings</div>
-    <a class="nav-link" href="/">← Dashboard</a>
+    <a class="nav-link" href="/">← Console Dashboard</a>
     <a class="nav-link active" href="/settings">⚙ Settings</a>
   </nav>
 
   <main class="main">
 
     <div class="status-bar {{ 'on' if status.active else 'off' }}">
-      {% if status.active %}🟢 Protection is running — USB-Sentinel is actively watching for drives
-      {% else %}🔴 Protection is not running — start it from the Dashboard{% endif %}
+      {% if status.active %}🟢 USB Watcher Protection running in background
+      {% else %}🔴 USB Watcher inactive{% endif %}
     </div>
 
     {% with messages = get_flashed_messages() %}
@@ -118,7 +110,7 @@
     <!-- ==================== TRUSTED DRIVES ==================== -->
     <section class="panel">
       <h2>💾 Drive Management</h2>
-      <div class="panel-sub">Every drive USB-Sentinel has ever seen. You can trust, untrust, or forget drives here.</div>
+      <div class="panel-sub">Manage drive trust policies. Forgetting a drive forces USB-Sentinel to prompt on next insert.</div>
 
       {% if drives %}
         <div class="drive-row drive-head">
@@ -140,61 +132,39 @@
             <form method="POST" action="/settings/trust" style="display:inline;">
               <input type="hidden" name="serial" value="{{ serial }}">
               <input type="hidden" name="trust" value="0">
-              <button class="trust-btn untrust" type="submit" title="Untrust this drive">Untrust</button>
+              <button class="trust-btn untrust" type="submit">Untrust</button>
             </form>
             {% else %}
             <form method="POST" action="/settings/trust" style="display:inline;">
               <input type="hidden" name="serial" value="{{ serial }}">
               <input type="hidden" name="trust" value="1">
-              <button class="trust-btn" type="submit" title="Trust this drive">Trust</button>
+              <button class="trust-btn" type="submit">Trust</button>
             </form>
             {% endif %}
             <form method="POST" action="/settings/forget" style="display:inline;">
               <input type="hidden" name="serial" value="{{ serial }}">
-              <button class="forget-btn" type="submit" title="Forget this drive">Forget</button>
+              <button class="forget-btn" type="submit">Forget</button>
             </form>
           </span>
         </div>
         {% endfor %}
       {% else %}
-        <div class="empty-note">No drives recorded yet. Connect a USB drive to get started.</div>
+        <div class="empty-note">No drives recorded in memory yet.</div>
       {% endif %}
     </section>
 
     <!-- ==================== BEHAVIOR SETTINGS ==================== -->
     <section class="panel">
-      <h2>⚙ Behavior Settings</h2>
-      <div class="panel-sub">Control how USB-Sentinel behaves when drives are connected and scanned.</div>
+      <h2>⚙ Security & Automation Rules</h2>
+      <div class="panel-sub">Configure automated response policies for USB insertion events.</div>
 
       <form method="POST" action="/settings/save">
-        <div class="section-label">🔌 On Drive Connect</div>
-
-        <div class="toggle-row">
-          <div>
-            <div class="toggle-label">Auto-scan on insert</div>
-            <div class="toggle-desc">Automatically start a file scan when a new drive is allowed (no popup needed)</div>
-          </div>
-          <label class="switch">
-            <input type="checkbox" name="auto_scan_on_insert" {% if settings.auto_scan_on_insert %}checked{% endif %}>
-            <span class="slider"></span>
-          </label>
-        </div>
-
-        <div class="toggle-row">
-          <div>
-            <div class="toggle-label">Ask to scan after allowing a drive</div>
-            <div class="toggle-desc">Show a popup offering a virus scan right after you allow a new drive</div>
-          </div>
-          <label class="switch">
-            <input type="checkbox" name="auto_scan_prompt" {% if settings.auto_scan_prompt %}checked{% endif %}>
-            <span class="slider"></span>
-          </label>
-        </div>
+        <div class="section-label">🔌 USB Insertion Rules</div>
 
         <div class="toggle-row">
           <div>
             <div class="toggle-label">Auto-eject blocked drives</div>
-            <div class="toggle-desc">Safely eject a drive automatically when you click Block</div>
+            <div class="toggle-desc">Automatically eject drive from Windows OS when Blocked by popup decision</div>
           </div>
           <label class="switch">
             <input type="checkbox" name="eject_on_block" {% if settings.eject_on_block %}checked{% endif %}>
@@ -202,52 +172,23 @@
           </label>
         </div>
 
-        <div class="section-label">🔍 Scanning</div>
-
         <div class="toggle-row">
           <div>
-            <div class="toggle-label">Quarantine threats</div>
-            <div class="toggle-desc">Automatically move infected files to a quarantine folder during virus scans</div>
+            <div class="toggle-label">Ask to scan after allowing a drive</div>
+            <div class="toggle-desc">Prompt user to launch file scan immediately after allowing an unknown USB drive</div>
           </div>
           <label class="switch">
-            <input type="checkbox" name="quarantine_threats" {% if settings.quarantine_threats %}checked{% endif %}>
+            <input type="checkbox" name="auto_scan_prompt" {% if settings.auto_scan_prompt %}checked{% endif %}>
             <span class="slider"></span>
           </label>
         </div>
 
-        <div class="input-row">
-          <div>
-            <div class="toggle-label">Scan file size limit (MB)</div>
-            <div class="toggle-desc">Skip files larger than this during scans. Set to 0 for no limit.</div>
-          </div>
-          <input type="number" name="scan_size_limit_mb" class="input-field" value="{{ settings.scan_size_limit_mb }}" min="0" placeholder="0">
-        </div>
-
-        <div class="input-row">
-          <div>
-            <div class="toggle-label">ClamAV path</div>
-            <div class="toggle-desc">Custom path to clamscan executable. Leave empty for default location.</div>
-          </div>
-          <input type="text" name="clamav_path" class="input-field" value="{{ settings.clamav_path }}" placeholder="C:\Program Files\ClamAV\clamscan.exe" style="width:320px;">
-        </div>
-
-        <div class="section-label">🖥️ Application</div>
+        <div class="section-label">🖥️ App Launch</div>
 
         <div class="toggle-row">
           <div>
-            <div class="toggle-label">Notification sound</div>
-            <div class="toggle-desc">Play a sound alert when threats are found during scanning</div>
-          </div>
-          <label class="switch">
-            <input type="checkbox" name="notification_sound" {% if settings.notification_sound %}checked{% endif %}>
-            <span class="slider"></span>
-          </label>
-        </div>
-
-        <div class="toggle-row">
-          <div>
-            <div class="toggle-label">Start protection on launch</div>
-            <div class="toggle-desc">Automatically start USB monitoring when you run USB-Sentinel</div>
+            <div class="toggle-label">Start protection watcher on app launch</div>
+            <div class="toggle-desc">Automatically start USB port hardware watcher when python main.py runs</div>
           </div>
           <label class="switch">
             <input type="checkbox" name="start_protection_on_launch" {% if settings.start_protection_on_launch %}checked{% endif %}>
@@ -255,14 +196,14 @@
           </label>
         </div>
 
-        <button class="save-btn" type="submit">Save Settings</button>
+        <button class="save-btn" type="submit">Save Security Settings</button>
       </form>
     </section>
 
-    <!-- ==================== DATA & EXPORT ==================== -->
+    <!-- ==================== DATA EXPORT ==================== -->
     <section class="panel">
       <h2>📦 Data & Export</h2>
-      <div class="panel-sub">Export your scan data or clear activity history.</div>
+      <div class="panel-sub">Export scan records to CSV or clear activity history log.</div>
 
       <div style="display:flex; gap:10px; flex-wrap:wrap;">
         <button class="export-btn" onclick="exportScanHistory()">📄 Export Scan History (CSV)</button>
@@ -294,7 +235,7 @@ async function exportScanHistory(){
 }
 
 async function clearActivity(){
-  if(!confirm('Clear all activity log entries? This cannot be undone.')) return;
+  if(!confirm('Clear all activity log entries?')) return;
   try {
     await fetch('/api/activity/clear', {method:'POST'});
     alert('Activity log cleared.');
