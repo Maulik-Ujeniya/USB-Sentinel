@@ -26,9 +26,9 @@
   .layout{ display:flex; min-height:100vh; }
 
   /* SIDEBAR */
-  .sidebar{ width:240px; flex-shrink:0; background:var(--panel-2); border-right:1px solid var(--border); padding:24px 18px; position:sticky; top:0; height:100vh; overflow-y:auto; display:flex; flex-direction:column; }
+  .sidebar{ width:250px; flex-shrink:0; background:var(--panel-2); border-right:1px solid var(--border); padding:24px 18px; position:sticky; top:0; height:100vh; overflow-y:auto; display:flex; flex-direction:column; }
   .brand{ display:flex; align-items:center; gap:10px; font-size:18px; font-weight:700; color:#FFF; margin-bottom:4px; }
-  .brand-logo{ width:26px; height:26px; border-radius:6px; background:linear-gradient(135deg, var(--cyan), var(--blue)); display:flex; align-items:center; justify-content:center; color:#000; font-size:14px; font-weight:800; box-shadow:0 0 12px rgba(0,240,255,0.4); }
+  .brand-logo{ width:28px; height:28px; border-radius:7px; background:linear-gradient(135deg, var(--cyan), var(--blue)); display:flex; align-items:center; justify-content:center; color:#000; font-size:15px; font-weight:800; box-shadow:0 0 14px rgba(0,240,255,0.4); }
   .brand span{ color:var(--cyan); }
   .brand-sub{ color:var(--muted); font-size:11px; margin-bottom:24px; text-transform:uppercase; letter-spacing:0.8px; font-weight:600; }
   .nav-link{ display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:8px; color:var(--muted); font-size:13.5px; font-weight:500; margin-bottom:3px; transition:all 0.15s ease; }
@@ -44,9 +44,13 @@
   /* MAIN CONTENT */
   .main{ flex:1; padding:32px 40px 100px; max-width:1180px; }
   .panel{ background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); padding:24px; margin-bottom:22px; scroll-margin-top:20px; box-shadow:0 4px 20px rgba(0,0,0,0.3); }
-  .panel h2{ font-size:18px; margin-bottom:16px; display:flex; align-items:center; gap:10px; color:#FFF; }
-  .panel-sub{ color:var(--muted); font-size:12.5px; margin-top:-12px; margin-bottom:18px; }
+  .panel h2{ font-size:18px; margin-bottom:6px; display:flex; align-items:center; gap:10px; color:#FFF; }
   .count-sub{ color:var(--muted); font-weight:400; font-size:13px; }
+
+  /* HUMAN HELP EXPLANATION CARD */
+  .help-badge{ background:rgba(0,240,255,0.04); border:1px solid rgba(0,240,255,0.15); border-radius:8px; padding:10px 14px; font-size:12.5px; color:var(--muted); margin-bottom:18px; display:flex; align-items:flex-start; gap:10px; }
+  .help-badge .info-icon{ color:var(--cyan); font-size:14px; flex-shrink:0; margin-top:1px; }
+  .help-badge b{ color:var(--ink); font-weight:600; }
 
   /* STATUS BAR */
   .status-bar{ display:flex; align-items:center; gap:12px; padding:12px 18px; border-radius:10px; font-size:13.5px; margin-bottom:18px; border:1px solid var(--border); transition:all 0.3s ease; }
@@ -56,14 +60,13 @@
   .status-bar .start-btn{ background:var(--emerald); color:#000; border:none; padding:6px 16px; border-radius:7px; font-size:12px; font-weight:700; margin-left:auto; transition:all 0.15s; }
   .status-bar .start-btn:hover{ filter:brightness(1.1); transform:translateY(-1px); }
 
-  /* SCAN STREAM TICKER */
-  .ticker-box{ background:linear-gradient(135deg, rgba(0,240,255,0.05), rgba(139,92,246,0.05)); border:1px solid rgba(0,240,255,0.3); border-radius:10px; padding:16px; margin-bottom:18px; display:none; animation:fadeIn 0.3s ease; }
+  /* REAL-TIME FILE TICKER */
+  .ticker-box{ background:linear-gradient(135deg, rgba(0,240,255,0.05), rgba(139,92,246,0.05)); border:1px solid rgba(0,240,255,0.3); border-radius:10px; padding:16px; margin-bottom:18px; display:none; }
   .ticker-header{ display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
   .ticker-title{ font-weight:700; font-size:13px; text-transform:uppercase; letter-spacing:0.8px; color:var(--cyan); display:flex; align-items:center; gap:8px; }
   .ticker-pulse{ width:8px; height:8px; border-radius:50%; background:var(--cyan); box-shadow:0 0 10px var(--cyan); animation:pulse 1s infinite alternate; }
   @keyframes pulse{ from{opacity:0.4;transform:scale(0.8);} to{opacity:1;transform:scale(1.2);} }
   .ticker-file{ font-family:'JetBrains Mono',monospace; font-size:12.5px; color:#FFF; background:rgba(0,0,0,0.5); padding:8px 12px; border-radius:6px; border:1px solid var(--border); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-top:6px; display:flex; align-items:center; gap:8px; }
-  .ticker-file .icon{ font-size:14px; flex-shrink:0; }
 
   /* HERO OVERVIEW */
   .hero{ display:flex; gap:32px; align-items:center; flex-wrap:wrap; }
@@ -117,7 +120,7 @@
   .scan-stats{ display:flex; gap:20px; font-size:12.5px; color:var(--muted); flex-wrap:wrap; }
   .scan-stats b{ color:var(--ink); }
 
-  /* DUPLICATE SHA-256 HASH BADGES */
+  /* DUPLICATE HASH BADGES */
   .hash-badge{ font-family:'JetBrains Mono',monospace; font-size:10.5px; background:rgba(139,92,246,0.15); color:var(--purple); border:1px solid rgba(139,92,246,0.3); padding:2px 7px; border-radius:4px; font-weight:600; }
   .dupgroup{ border:1px solid var(--border); border-radius:10px; margin-bottom:10px; overflow:hidden; background:var(--panel-2); }
   .dupgroup summary{ list-style:none; cursor:pointer; padding:14px 18px; display:flex; justify-content:space-between; align-items:center; font-size:13.5px; font-weight:600; color:#FFF; transition:background 0.15s; }
@@ -133,7 +136,7 @@
   .tag-orig{ background:rgba(16,185,129,0.15); color:var(--emerald); border:1px solid rgba(16,185,129,0.3); }
   .tag-copy{ background:rgba(245,158,11,0.15); color:var(--amber); border:1px solid rgba(245,158,11,0.3); }
 
-  /* STORAGE CATEGORY BAR */
+  /* CATEGORY BAR */
   .catbar{ display:flex; height:36px; border-radius:8px; overflow:hidden; border:1px solid var(--border); margin-bottom:18px; }
   .catbar .seg{ flex-basis:0; min-width:14px; display:flex; align-items:center; justify-content:center; overflow:hidden; cursor:pointer; transition:opacity 0.15s; }
   .catbar .seg:hover{ opacity:0.85; }
@@ -184,7 +187,6 @@
   .scan-input-row input::placeholder{ color:var(--muted); }
   .scan-btn{ background:linear-gradient(135deg, var(--cyan), var(--blue)); color:#000; border:none; padding:10px 20px; border-radius:8px; font-weight:700; font-size:13px; transition:all 0.15s; box-shadow:0 0 12px rgba(0,240,255,0.25); }
   .scan-btn:hover{ filter:brightness(1.1); transform:translateY(-1px); }
-  .scan-btn:disabled{ opacity:0.5; cursor:not-allowed; transform:none; }
   .scan-btn.sec{ background:linear-gradient(135deg, var(--emerald), #059669); color:#000; box-shadow:0 0 12px rgba(16,185,129,0.25); }
 
   /* ACTIVITY LOG */
@@ -206,8 +208,8 @@
 
   .back-to-top{ position:fixed; bottom:24px; left:24px; width:42px; height:42px; border-radius:50%;
     background:var(--cyan); color:#000; border:none; font-size:18px; font-weight:800; cursor:pointer;
-    opacity:0; pointer-events:none; transition:all 0.2s ease; transform:translateY(10px); box-shadow:0 0 15px rgba(0,240,255,0.3); }
-  .back-to-top.visible{ opacity:1; pointer-events:auto; transform:translateY(0); }
+    opacity:0; pointer-events:none; transition:all 0.2s ease; transform:translateY(0); box-shadow:0 0 15px rgba(0,240,255,0.3); }
+  .back-to-top.visible{ opacity:1; pointer-events:auto; }
   .empty-note{ color:var(--muted); font-size:13px; padding:12px 0; }
   .spinner{ display:inline-block; width:14px; height:14px; border:2px solid var(--border); border-top-color:var(--cyan); border-radius:50%; animation:spin 0.6s linear infinite; }
   @keyframes spin{ to{transform:rotate(360deg);} }
@@ -259,21 +261,21 @@
     <!-- Status Bar -->
     <div class="status-bar {{ 'on' if status.active else 'off' }}" id="statusBar">
       {% if status.active %}
-        🟢 Protection active — watching USB ports for insertion events
+        🟢 Protection active — watching USB hardware ports & Windows popup alerts enabled
       {% else %}
         🔴 USB Protection inactive
         <button class="start-btn" onclick="startProtection()">▶ Enable Protection</button>
       {% endif %}
     </div>
 
-    <!-- Live Streaming File Ticker (File by file preview) -->
+    <!-- Real-Time Streaming Scan Ticker -->
     <div class="ticker-box" id="scanTickerBox">
       <div class="ticker-header">
-        <div class="ticker-title"><div class="ticker-pulse"></div> Live File Stream Scanner</div>
+        <div class="ticker-title"><div class="ticker-pulse"></div> Real-Time File Stream Scanner</div>
         <div id="tickerCount" style="font-size:12px;color:var(--muted);font-weight:600;"></div>
       </div>
       <div class="ticker-file" id="tickerFile">
-        <span class="icon">📄</span> <span id="tickerFileName">Initializing scan...</span>
+        <span class="icon">📄</span> <span id="tickerFileName">Initializing scan stream...</span>
       </div>
     </div>
 
@@ -286,7 +288,12 @@
     {% set ring_color = 'var(--red)' if pct_used > 90 else ('var(--amber)' if pct_used > 70 else 'var(--cyan)') %}
 
     <section id="overview" class="panel">
-      <h2>▣ Overview</h2>
+      <h2>▣ Overview & System Telemetry</h2>
+      <div class="help-badge">
+        <span class="info-icon">💡</span>
+        <div><b>What is this section?</b> Provides an overall health overview of the analyzed drive, showing used vs free capacity, total file counts, and space wasted by duplicate copies.</div>
+      </div>
+
       <div class="hero">
         <div class="stamp" style="--pct:{{ pct_used }}; --ring-color:{{ ring_color }};">
           <div class="stamp-inner">
@@ -313,19 +320,25 @@
     </section>
     {% else %}
     <section id="overview" class="panel">
-      <div class="empty-note" style="padding:20px;text-align:center;">
-        <h3 style="color:#FFF;margin-bottom:6px;">USB-Sentinel Security Console</h3>
-        <p>No drive snapshot active. Insert a USB drive or enter a path below to run a real-time scan.</p>
+      <h2>▣ Security Console Overview</h2>
+      <div class="empty-note" style="padding:15px;text-align:center;">
+        <h3 style="color:#FFF;margin-bottom:6px;">USB-Sentinel Ready</h3>
+        <p>Insert a USB drive or enter a path below to run a real-time scan.</p>
       </div>
     </section>
     {% endif %}
 
     <!-- ==================== CONNECTED DRIVES ==================== -->
     <section id="live-drives" class="panel">
-      <h2>💾 Connected Drives <span class="count-sub" id="driveCount"></span></h2>
+      <h2>💾 Connected Removable Drives <span class="count-sub" id="driveCount"></span></h2>
+      <div class="help-badge">
+        <span class="info-icon">💡</span>
+        <div><b>What is this section?</b> Shows all USB drives currently plugged into your PC. You can Trust, Untrust, Scan, or Block & Auto-Eject drives instantly.</div>
+      </div>
+
       <div class="scan-input-row">
         <input type="text" id="customScanPath" placeholder="Enter drive path (e.g. F:\)">
-        <button class="scan-btn" onclick="startFileScan()" id="fileScanBtn">📊 Scan Drive Files</button>
+        <button class="scan-btn" onclick="startFileScan()" id="fileScanBtn">📊 Analyze Drive Files</button>
         <button class="scan-btn sec" onclick="startSecurityScan()" id="secScanBtn">⚡ Heuristic Security Scan</button>
       </div>
       <div id="liveDrivesList">
@@ -336,6 +349,10 @@
     <!-- ==================== SCAN MONITOR ==================== -->
     <section id="scan-monitor" class="panel">
       <h2>🔍 Live Scan Progress</h2>
+      <div class="help-badge">
+        <span class="info-icon">💡</span>
+        <div><b>What is this section?</b> Monitors background scan progress in real time. Shows files processed and completion status.</div>
+      </div>
       <div id="scanMonitorContent">
         <div class="empty-note">No active background scans. Use the buttons above to analyze a drive.</div>
       </div>
@@ -344,7 +361,12 @@
     <!-- ==================== STORAGE BREAKDOWN ==================== -->
     {% if data %}
     <section class="panel">
-      <h2>📊 Storage Breakdown</h2>
+      <h2>📊 File Storage Categories</h2>
+      <div class="help-badge">
+        <span class="info-icon">💡</span>
+        <div><b>What is this section?</b> Categorizes files on your drive into Images, Videos, Documents, Archives, Code, and Executables to show storage distribution.</div>
+      </div>
+
       <div class="catbar">
         {% for cat, info in data.category_summary.items() %}
           {% set pct = ((info.total_size / total * 100) if total else 0) %}
@@ -365,7 +387,12 @@
 
     <!-- ==================== ALL FILES ==================== -->
     <section id="files" class="panel">
-      <h2>🗂 All Files</h2>
+      <h2>🗂 File Explorer & Inspection</h2>
+      <div class="help-badge">
+        <span class="info-icon">💡</span>
+        <div><b>What is this section?</b> Search and inspect every file on the drive. Filter by category, extension, or name.</div>
+      </div>
+
       <div class="controls">
         <input type="text" id="searchBox" placeholder="Filter by file name or extension...">
         <button class="filter-btn active" data-cat="all">All</button>
@@ -403,7 +430,12 @@
 
     <!-- ==================== DUPLICATES ==================== -->
     <section id="duplicates" class="panel">
-      <h2>⧉ Duplicate Files <span class="count-sub">({{ data.duplicates|length }} verified groups)</span></h2>
+      <h2>⧉ Cryptographic Duplicate Intelligence <span class="count-sub">({{ data.duplicates|length }} verified groups)</span></h2>
+      <div class="help-badge">
+        <span class="info-icon">💡</span>
+        <div><b>What is this section?</b> Groups duplicate files using <b>SHA-256 cryptographic hashes</b>. Demonstrates mathematical proof that file contents are 100% identical.</div>
+      </div>
+
       {% if data.duplicates %}
         {% for dup in data.duplicates %}
         <details class="dupgroup">
@@ -439,7 +471,11 @@
 
     <!-- ==================== ACTIVITY LOG ==================== -->
     <section id="activity" class="panel">
-      <h2>📋 Activity Log <span class="count-sub" id="activityCount"></span></h2>
+      <h2>📋 System Activity Audit Log <span class="count-sub" id="activityCount"></span></h2>
+      <div class="help-badge">
+        <span class="info-icon">💡</span>
+        <div><b>What is this section?</b> Audit trail logging all USB insertions, ejection commands, security scans, and trust actions.</div>
+      </div>
       <div id="activityList">
         <div class="empty-note"><span class="spinner"></span> Loading activity...</div>
       </div>
@@ -569,7 +605,6 @@ async function pollScanProgress(){
 
     const scans = d.scans || {};
     const keys = Object.keys(scans);
-
     let activeScanFound = false;
 
     if(keys.length === 0){
@@ -583,7 +618,6 @@ async function pollScanProgress(){
       const s = scans[key];
       if(s.active){
         activeScanFound = true;
-        // Show live streaming file ticker box
         tickerBox.style.display = 'block';
         tickerCount.textContent = `${s.files_scanned||0} files processed`;
         const currentFile = s.current_file || s.current_folder || 'Scanning files...';
@@ -642,7 +676,7 @@ async function pollStatus(){
     const bar = document.getElementById('statusBar');
     if(d.protection.active){
       bar.className = 'status-bar on';
-      bar.innerHTML = '🟢 Protection active — watching USB ports for insertion events';
+      bar.innerHTML = '🟢 Protection active — watching USB hardware ports & Windows popup alerts enabled';
     } else {
       bar.className = 'status-bar off';
       bar.innerHTML = '🔴 USB Protection inactive <button class="start-btn" onclick="startProtection()">▶ Enable Protection</button>';
@@ -687,7 +721,7 @@ loadLiveDrives();
 loadActivity();
 pollStatus();
 pollScanProgress();
-setInterval(pollScanProgress, 250);  // High-frequency polling for smooth file streaming
+setInterval(pollScanProgress, 250);
 setInterval(loadLiveDrives, 4000);
 setInterval(loadActivity, 6000);
 setInterval(pollStatus, 3000);
